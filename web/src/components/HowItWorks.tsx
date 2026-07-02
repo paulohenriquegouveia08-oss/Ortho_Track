@@ -12,7 +12,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="como-funciona" className="py-24 bg-surface relative">
+    <section id="como-funciona" className="py-24 bg-surface relative scroll-mt-32">
       <div className="mx-auto max-w-5xl px-6">
         <Reveal>
           <div className="text-center mb-16">
@@ -22,19 +22,19 @@ export default function HowItWorks() {
           </div>
         </Reveal>
 
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-4 gap-6 items-stretch">
           {steps.map((step, i) => (
             <Reveal key={i} delay={0.1 + i * 0.1}>
-              <div className="relative flex md:flex-col gap-5 md:gap-0 items-start">
+              <div className="relative flex md:flex-col gap-5 md:gap-0 items-start h-full">
                 <div className="w-14 h-14 rounded-2xl bg-primary text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
                   {step.number}
                 </div>
-                <div className="bg-white rounded-2xl p-5 border border-border flex-1 shadow-sm hover:shadow-md transition-shadow">
+                <div className="bg-white rounded-2xl p-5 border border-border flex-1 shadow-sm hover:shadow-md transition-shadow h-full min-h-[180px] flex flex-col">
                   <div className="flex items-center gap-2 mb-2">
                     <step.icon size={16} className="text-primary" />
                     <h3 className="font-semibold text-dark text-sm">{step.title}</h3>
                   </div>
-                  <p className="text-muted text-sm leading-relaxed">{step.text}</p>
+                  <p className="text-muted text-sm leading-relaxed flex-1">{step.text}</p>
                 </div>
               </div>
             </Reveal>

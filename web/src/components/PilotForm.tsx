@@ -53,7 +53,7 @@ export default function PilotForm() {
   }
 
   return (
-    <section id="piloto" className="py-24 gradient-contrast relative overflow-hidden">
+    <section id="piloto" className="py-24 gradient-contrast relative overflow-hidden scroll-mt-32">
       <div className="absolute top-0 left-0 w-[400px] h-[300px] bg-primary/[0.06] rounded-full blur-[120px] -translate-x-1/3 -translate-y-1/3 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.04] rounded-full blur-[100px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
 

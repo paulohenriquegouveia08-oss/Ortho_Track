@@ -8,12 +8,11 @@ import { FloatingMockup } from "./ui/FloatingMockup";
 export default function Hero() {
   return (
     <section className="relative gradient-hero pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
-      {/* Subtle dots */}
       <div className="absolute top-[15%] left-[5%] w-2 h-2 rounded-full bg-primary/20 animate-pulse-soft" />
       <div className="absolute top-[25%] right-[8%] w-1.5 h-1.5 rounded-full bg-primary/15 animate-pulse-soft" style={{ animationDelay: '1s' }} />
       <div className="absolute bottom-[20%] left-[15%] w-1 h-1 rounded-full bg-dark/5 animate-pulse-soft" style={{ animationDelay: '2s' }} />
 
-      <div className="relative mx-auto max-w-7xl px-6 grid md:grid-cols-[42%_58%] gap-8 items-center">
+      <div className="relative mx-auto max-w-7xl px-6 grid md:grid-cols-[40%_60%] gap-8 items-center">
         {/* Text side */}
         <div className="relative z-10">
           <Reveal delay={0.1}>
@@ -77,63 +76,53 @@ export default function Hero() {
           </Reveal>
         </div>
 
-        {/* Mockup side — scroll-animated */}
+        {/* Mockup side — bigger, cards closer */}
         <div className="relative flex justify-center z-10">
-          <FloatingMockup
-            src="/images/hero-mockup.png"
-            alt="Mockup do aplicativo OrthoTrack mostrando tempo de uso do alinhador"
-            className="w-56 md:w-72 lg:w-80"
-            priority
-          />
+          <div className="relative w-full max-w-[560px]">
+            <FloatingMockup
+              src="/images/hero-mockup.png"
+              alt="Mockup do aplicativo OrthoTrack mostrando tempo de uso do alinhador"
+              className="w-[340px] md:w-[460px] lg:w-[520px] mx-auto"
+              priority
+            />
 
-          {/* Floating cards */}
-          <Reveal delay={0.8} direction="left" className="floating-card absolute -left-6 md:-left-20 top-10 md:top-16 animate-float z-20">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                <Target size={15} className="text-success" />
+            {/* Cards positioned relative to the mockup container */}
+            <Reveal delay={0.8} className="floating-card absolute left-0 top-[28%] animate-float z-20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <Target size={15} className="text-success" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Meta diária</p>
+                  <p className="text-xs font-bold text-dark">22h</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Meta diária</p>
-                <p className="text-xs font-bold text-dark">22h</p>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
 
-          <Reveal delay={0.9} direction="right" className="floating-card absolute -right-4 md:-right-16 top-20 md:top-28 animate-float-delayed z-20">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Activity size={15} className="text-primary" />
+            <Reveal delay={0.9} className="floating-card absolute right-0 top-[42%] animate-float-delayed z-20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Activity size={15} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Status</p>
+                  <p className="text-xs font-bold text-success">Tempo real</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Aderência</p>
-                <p className="text-xs font-bold text-primary">Acompanhada</p>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
 
-          <Reveal delay={1.0} direction="left" className="floating-card absolute -left-4 md:-left-14 bottom-16 md:bottom-24 animate-float-slow z-20">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
-                <Shield size={15} className="text-warning" />
+            <Reveal delay={1.0} className="floating-card absolute left-[8%] bottom-[18%] animate-float-slow z-20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                  <Shield size={15} className="text-warning" />
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Pacientes</p>
+                  <p className="text-xs font-bold text-warning">Em alerta</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Pacientes</p>
-                <p className="text-xs font-bold text-warning">Em alerta</p>
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={1.1} direction="right" className="floating-card absolute -right-6 md:-right-16 bottom-28 md:bottom-36 animate-float z-20">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                <Users size={15} className="text-success" />
-              </div>
-              <div>
-                <p className="text-[9px] text-muted leading-none uppercase tracking-wider">Status</p>
-                <p className="text-xs font-bold text-success">Tempo real</p>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
       </div>
     </section>

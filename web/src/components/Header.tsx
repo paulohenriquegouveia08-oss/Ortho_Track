@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 const navLinks = [
   { label: "Problema", href: "#problema" },
@@ -15,28 +15,44 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const { scrollY } = useScroll();
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 90);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const top = useTransform(scrollY, [0, 120], [0, 14]);
+  const height = useTransform(scrollY, [0, 120], [72, 62]);
+  const paddingLeft = useTransform(scrollY, [0, 120], [24, 20]);
+  const paddingRight = useTransform(scrollY, [0, 120], [24, 20]);
+  const borderRadius = useTransform(scrollY, [0, 120], [0, 999]);
+  const backgroundColor = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0.85)", "rgba(255,255,255,0.72)"]);
+  const boxShadow = useTransform(scrollY, [0, 120], [
+    "0 1px 3px rgba(0,0,0,0.04)",
+    "0 20px 60px rgba(15,23,42,0.14), 0 4px 12px rgba(0,0,0,0.06)",
+  ]);
+  const borderOpacity = useTransform(scrollY, [0, 120], [0.5, 0.35]);
 
   return (
     <>
-      {/* Spacer to prevent content jumping behind fixed header */}
-      <div className="h-16" />
+      <div className="h-[72px]" />
 
-      <header
-        className={`fixed z-50 transition-all duration-500 ease-out ${
-          scrolled
-            ? "top-3 left-1/2 w-[calc(100%-1.5rem)] max-w-5xl -translate-x-1/2 rounded-full border border-white/60 bg-white/90 shadow-xl backdrop-blur-xl"
-            : "top-0 left-0 w-full bg-white/80 backdrop-blur-lg border-b border-border/50"
-        }`}
+      <motion.header
+        style={{
+          top,
+          height,
+          paddingLeft,
+          paddingRight,
+          borderRadius,
+          backgroundColor,
+          boxShadow,
+        }}
+        className="fixed left-1/2 w-full max-w-7xl z-50 -translate-x-1/2"
       >
-        <div className="mx-auto max-w-7xl flex items-center justify-between h-14 px-6">
+        {/* Border ring for glassmorphism */}
+        <motion.div
+          style={{ opacity: borderOpacity }}
+          className="absolute inset-0 rounded-[inherit] border border-white pointer-events-none"
+        />
+        <div className="absolute inset-0 rounded-[inherit] ring-1 ring-slate-900/5 pointer-events-none" />
+
+        <div className="mx-auto max-w-7xl flex items-center justify-between h-full px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
               <span className="text-white font-bold text-xs">OT</span>
@@ -63,7 +79,7 @@ export default function Header() {
           </nav>
 
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-surface transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-dark/5 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menu"
           >
@@ -77,7 +93,7 @@ export default function Header() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white border-t border-border overflow-hidden"
+              className="md:hidden bg-white/90 backdrop-blur-xl border-t border-border/50 overflow-hidden"
             >
               <div className="px-6 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => (
@@ -85,7 +101,7 @@ export default function Header() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className="text-sm font-medium text-muted hover:text-primary hover:bg-surface py-3 px-3 rounded-lg transition-colors"
+                    className="text-sm font-medium text-muted hover:text-primary hover:bg-primary/5 py-3 px-3 rounded-lg transition-colors"
                   >
                     {link.label}
                   </a>
@@ -101,7 +117,7 @@ export default function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-      </header>
+      </motion.header>
     </>
   );
 }

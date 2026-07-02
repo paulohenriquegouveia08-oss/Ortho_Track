@@ -26,7 +26,7 @@ const riskBg: Record<string, string> = {
 
 export default function ClinicPanel() {
   return (
-    <section id="para-clinicas" className="py-24 bg-white relative overflow-hidden">
+    <section id="para-clinicas" className="py-24 bg-white relative overflow-hidden scroll-mt-32">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/[0.03] rounded-full blur-[120px]" />
 
       <div className="mx-auto max-w-6xl px-6 relative z-10">

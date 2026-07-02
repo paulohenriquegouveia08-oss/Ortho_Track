@@ -11,7 +11,7 @@ const steps = [
 
 export default function SolutionSection() {
   return (
-    <section id="solucao" className="py-24 bg-surface">
+    <section id="solucao" className="py-24 bg-surface scroll-mt-32">
       <div className="mx-auto max-w-5xl px-6">
         <Reveal>
           <div className="text-center mb-16">
@@ -25,10 +25,10 @@ export default function SolutionSection() {
           </div>
         </Reveal>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 items-stretch">
           {steps.map((step, i) => (
             <Reveal key={i} delay={0.1 + i * 0.12}>
-              <div className="text-center">
+              <div className="text-center h-full min-h-[220px] flex flex-col items-center justify-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
                   <step.icon size={28} className="text-primary" />
                 </div>

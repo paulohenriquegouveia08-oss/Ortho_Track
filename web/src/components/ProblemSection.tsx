@@ -12,7 +12,7 @@ const painPoints = [
 
 export default function ProblemSection() {
   return (
-    <section id="problema" className="py-24 bg-white relative overflow-hidden">
+    <section id="problema" className="py-24 bg-white relative overflow-hidden scroll-mt-32">
       <div className="absolute top-20 left-0 w-[200px] h-[200px] bg-danger/[0.03] rounded-full blur-[80px]" />
       <div className="absolute bottom-10 right-0 w-[250px] h-[250px] bg-warning/[0.03] rounded-full blur-[80px]" />
 

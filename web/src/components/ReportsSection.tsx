@@ -13,7 +13,13 @@ const weeklyData = [
   { day: "Dom", hours: 14 },
 ];
 
-const maxHours = 24;
+const goal = 22;
+
+function barColor(h: number) {
+  if (h >= 21.5) return "bg-success";
+  if (h >= 18) return "bg-warning";
+  return "bg-danger";
+}
 
 export default function ReportsSection() {
   return (
@@ -35,8 +41,8 @@ export default function ReportsSection() {
 
         <Reveal delay={0.1}>
           <div className="bg-white rounded-3xl border border-border shadow-2xl p-8 max-w-5xl mx-auto">
-            {/* Dashboard Header */}
-            <div className="flex items-center justify-between mb-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="font-bold text-dark text-lg">Relatório Semanal</h3>
                 <p className="text-muted text-sm">João Silva — 23 a 29 de junho</p>
@@ -47,43 +53,51 @@ export default function ReportsSection() {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-[2fr_1fr] gap-8">
-              {/* Chart */}
+            <div className="grid lg:grid-cols-[1.4fr_0.8fr] gap-8">
+              {/* Chart — aligned bars */}
               <div>
-                <p className="text-[11px] font-semibold text-muted mb-4 uppercase tracking-wider">Horas por dia</p>
-                <div className="flex items-end gap-3 h-64 border-b border-border pb-3">
-                  {weeklyData.map((d, i) => {
-                    const height = (d.hours / maxHours) * 100;
-                    const isGood = d.hours >= 21;
-                    const isWarning = d.hours >= 18 && d.hours < 21;
-                    const barColor = isGood ? "bg-success" : isWarning ? "bg-warning" : "bg-danger";
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ height: 0 }}
-                        whileInView={{ height: `${height}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: i * 0.08, ease: "easeOut" }}
-                        className="flex-1 flex flex-col items-center gap-1.5"
-                      >
-                        <span className="text-[11px] font-bold text-dark">{d.hours}h</span>
-                        <div className={`w-full ${barColor} rounded-t-lg`} style={{ height: `${height}%` }} />
-                        <span className="text-[10px] text-muted font-medium">{d.day}</span>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-                <div className="mt-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 border-t-2 border-dashed border-primary/40" />
-                    <span className="text-[10px] text-primary font-medium">Meta: 22h</span>
+                <p className="mb-4 text-[11px] font-semibold text-muted uppercase tracking-wider">Horas por dia</p>
+
+                {/* Fixed height chart area */}
+                <div className="h-64 border-b border-border">
+                  <div className="flex items-end justify-between h-full gap-3 pt-6">
+                    {weeklyData.map((d, i) => {
+                      const heightPct = (d.hours / goal) * 100;
+                      return (
+                        <div key={i} className="flex flex-1 flex-col items-center justify-end h-full">
+                          {/* Value above bar */}
+                          <span className="mb-2 text-[11px] font-bold text-dark">{d.hours}h</span>
+                          {/* Bar */}
+                          <motion.div
+                            initial={{ height: 0 }}
+                            whileInView={{ height: `${heightPct}%` }}
+                            viewport={{ once: true, amount: 0.3 }}
+                            transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
+                            className={`w-full max-w-[64px] rounded-t-xl ${barColor(d.hours)}`}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
+                </div>
+
+                {/* Day labels — fixed baseline */}
+                <div className="flex justify-between gap-3 mt-3">
+                  {weeklyData.map((d, i) => (
+                    <span key={i} className="flex-1 text-center text-[11px] text-muted font-medium">{d.day}</span>
+                  ))}
+                </div>
+
+                {/* Goal line legend */}
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="w-4 border-t-2 border-dashed border-primary/40" />
+                  <span className="text-[10px] text-primary font-medium">Meta: {goal}h</span>
                 </div>
               </div>
 
-              {/* Metrics */}
+              {/* Indicators — staggered */}
               <div>
-                <p className="text-[11px] font-semibold text-muted mb-4 uppercase tracking-wider">Indicadores</p>
+                <p className="mb-4 text-[11px] font-semibold text-muted uppercase tracking-wider">Indicadores</p>
                 {[
                   { label: "Média semanal", value: "18h30", color: "text-dark" },
                   { label: "Melhor dia", value: "Sex — 22h", color: "text-success" },
@@ -91,17 +105,24 @@ export default function ReportsSection() {
                   { label: "Maior pausa", value: "3h15min", color: "text-warning" },
                   { label: "Total da semana", value: "130h", color: "text-dark" },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
+                    className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                  >
                     <span className="text-sm text-muted">{item.label}</span>
                     <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
 
-            {/* Pause history */}
-            <div className="mt-8 pt-6 border-t border-border">
-              <p className="text-[11px] font-semibold text-muted mb-3 uppercase tracking-wider">Pausas registradas</p>
+            {/* Pausas */}
+            <div className="mt-6 pt-5 border-t border-border">
+              <p className="mb-3 text-[11px] font-semibold text-muted uppercase tracking-wider">Pausas registradas</p>
               <div className="flex flex-wrap gap-2">
                 {[
                   { time: "08:30", duration: "15min", type: "Café" },
@@ -109,7 +130,7 @@ export default function ReportsSection() {
                   { time: "15:30", duration: "10min", type: "Lanche" },
                   { time: "19:00", duration: "30min", type: "Jantar" },
                 ].map((pause, i) => (
-                  <div key={i} className="bg-surface border border-border rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <div key={i} className="bg-surface border border-border rounded-xl px-4 py-2 flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-warning" />
                     <span className="text-xs font-medium text-dark">{pause.time}</span>
                     <span className="text-[10px] text-muted">—</span>
