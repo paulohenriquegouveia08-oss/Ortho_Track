@@ -3,10 +3,21 @@
 import { motion } from "framer-motion";
 import { Clock, EyeOff, AlertTriangle, BarChart3 } from "lucide-react";
 
+const painPoints = [
+  { icon: Clock, title: "Paciente esquece de recolocar", text: "Pausas rápidas durante refeições viram horas sem uso do alinhador.", color: "warning" },
+  { icon: EyeOff, title: "Clínica perde visibilidade", text: "O dentista depende do relato do paciente para entender o que aconteceu entre as consultas.", color: "danger" },
+  { icon: AlertTriangle, title: "Tratamento pode atrasar", text: "Baixa aderência compromete a previsibilidade e pode prolongar o tratamento.", color: "danger" },
+  { icon: BarChart3, title: "Faltam dados objetivos", text: "Sem registros diários, é difícil saber quais pacientes precisam de atenção antes da próxima consulta.", color: "primary" },
+];
+
 export default function ProblemSection() {
   return (
-    <section id="problema" className="py-24 bg-white">
-      <div className="mx-auto max-w-6xl px-6">
+    <section id="problema" className="py-24 bg-surface relative overflow-hidden">
+      {/* Subtle decorative elements */}
+      <div className="absolute top-20 left-0 w-[200px] h-[200px] bg-danger/[0.03] rounded-full blur-[80px]" />
+      <div className="absolute bottom-10 right-0 w-[250px] h-[250px] bg-warning/[0.03] rounded-full blur-[80px]" />
+
+      <div className="mx-auto max-w-6xl px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -30,45 +41,43 @@ export default function ProblemSection() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-danger/5 border border-danger/10 rounded-2xl p-8 text-center mb-16 max-w-md mx-auto"
+          className="relative mb-16 max-w-md mx-auto"
         >
-          <p className="text-4xl md:text-5xl font-bold text-danger mb-2">6 a 8 semanas</p>
-          <p className="text-muted text-sm">sem dados claros de uso entre consultas</p>
+          <div className="absolute inset-0 bg-danger/10 rounded-3xl blur-xl" />
+          <div className="relative bg-danger/5 border border-danger/15 rounded-3xl p-8 text-center">
+            <p className="text-4xl md:text-5xl font-bold text-danger mb-2">6 a 8 semanas</p>
+            <p className="text-muted text-sm">sem dados claros de uso entre consultas</p>
+          </div>
         </motion.div>
 
         {/* Before / After comparison */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
           {/* Before */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="bg-surface border border-border rounded-2xl p-8"
+            className="bg-white border border-border rounded-3xl p-8 shadow-sm"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-danger/10 flex items-center justify-center">
                 <AlertTriangle size={20} className="text-danger" />
               </div>
-              <h3 className="font-bold text-dark text-lg">Antes</h3>
+              <h3 className="font-bold text-dark text-lg">Hoje</h3>
             </div>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-danger mt-1.5 shrink-0" />
-                Paciente relata o uso de memória
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-danger mt-1.5 shrink-0" />
-                Clínica só descobre problemas na consulta
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-danger mt-1.5 shrink-0" />
-                Difícil identificar baixa aderência
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-danger mt-1.5 shrink-0" />
-                Poucos dados entre consultas
-              </li>
+              {[
+                "Relato verbal do paciente",
+                "Clínica só descobre problemas na consulta",
+                "Baixa aderência percebida tarde demais",
+                "Decisões baseadas em memória",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-muted">
+                  <div className="w-1.5 h-1.5 rounded-full bg-danger mt-1.5 shrink-0" />
+                  {item}
+                </li>
+              ))}
             </ul>
           </motion.div>
 
@@ -78,52 +87,43 @@ export default function ProblemSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="bg-primary-light border border-primary/10 rounded-2xl p-8"
+            className="bg-white border border-primary/20 rounded-3xl p-8 shadow-sm relative overflow-hidden"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="absolute top-0 right-0 w-[100px] h-[100px] bg-primary/[0.05] rounded-full blur-[40px]" />
+            <div className="flex items-center gap-3 mb-6 relative z-10">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                 <BarChart3 size={20} className="text-primary" />
               </div>
               <h3 className="font-bold text-dark text-lg">Com OrthoTrack</h3>
             </div>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                Registros diários de uso
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                Tempo sem uso visível
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                Aderência calculada automaticamente
-              </li>
-              <li className="flex items-start gap-3 text-sm text-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                Pacientes em risco identificados antes
-              </li>
+            <ul className="space-y-4 relative z-10">
+              {[
+                "Registros diários de uso",
+                "Tempo sem uso visível",
+                "Aderência calculada automaticamente",
+                "Pacientes em risco identificados antes",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm text-muted">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  {item}
+                </li>
+              ))}
             </ul>
           </motion.div>
         </div>
 
         {/* Pain points cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {[
-            { icon: Clock, title: "Paciente esquece de recolocar", text: "Pausas rápidas durante refeições viram horas sem uso.", color: "warning" },
-            { icon: EyeOff, title: "Clínica perde visibilidade", text: "O dentista depende do relato do paciente para entender o que aconteceu.", color: "danger" },
-            { icon: AlertTriangle, title: "Tratamento pode atrasar", text: "Baixa aderência compromete a previsibilidade do tratamento.", color: "danger" },
-            { icon: BarChart3, title: "Faltam dados objetivos", text: "Sem registros, é difícil saber quem precisa de atenção.", color: "primary" },
-          ].map((card, i) => (
+          {painPoints.map((card, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
-              className="bg-surface rounded-xl p-5 border border-border hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-5 border border-border hover:shadow-md hover:border-primary/10 transition-all group"
             >
-              <div className={`w-10 h-10 rounded-xl bg-${card.color}/10 flex items-center justify-center mb-3`}>
+              <div className={`w-10 h-10 rounded-xl bg-${card.color}/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                 <card.icon size={18} className={`text-${card.color}`} />
               </div>
               <h3 className="font-semibold text-dark text-sm mb-1.5">{card.title}</h3>

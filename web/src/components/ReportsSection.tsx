@@ -3,21 +3,23 @@
 import { motion } from "framer-motion";
 
 const weeklyData = [
-  { day: "Seg", hours: 18, target: 22 },
-  { day: "Ter", hours: 21, target: 22 },
-  { day: "Qua", hours: 16, target: 22 },
-  { day: "Qui", hours: 20, target: 22 },
-  { day: "Sex", hours: 22, target: 22 },
-  { day: "Sab", hours: 19, target: 22 },
-  { day: "Dom", hours: 14, target: 22 },
+  { day: "Seg", hours: 18 },
+  { day: "Ter", hours: 21 },
+  { day: "Qua", hours: 16 },
+  { day: "Qui", hours: 20 },
+  { day: "Sex", hours: 22 },
+  { day: "Sab", hours: 19 },
+  { day: "Dom", hours: 14 },
 ];
 
 const maxHours = 24;
 
 export default function ReportsSection() {
   return (
-    <section className="py-24 bg-surface">
-      <div className="mx-auto max-w-6xl px-6">
+    <section className="py-24 bg-white relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-primary/[0.02] rounded-full blur-[100px]" />
+
+      <div className="mx-auto max-w-6xl px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -29,8 +31,8 @@ export default function ReportsSection() {
             Dados que ajudam a tomar decisões melhores
           </h2>
           <p className="text-muted max-w-2xl mx-auto leading-relaxed">
-            O OrthoTrack organiza os registros de uso em relatórios claros,
-            permitindo acompanhar evolução diária e semanal.
+            O OrthoTrack transforma eventos simples em relatórios claros de
+            aderência, permitindo acompanhar evolução diária e semanal.
           </p>
         </motion.div>
 
@@ -39,7 +41,7 @@ export default function ReportsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl border border-border shadow-xl p-8 max-w-5xl mx-auto"
+          className="bg-white rounded-3xl border border-border shadow-2xl p-8 max-w-5xl mx-auto"
         >
           {/* Dashboard Header */}
           <div className="flex items-center justify-between mb-8">
@@ -47,8 +49,8 @@ export default function ReportsSection() {
               <h3 className="font-bold text-dark text-lg">Relatório Semanal</h3>
               <p className="text-muted text-sm">João Silva — 23 a 29 de junho</p>
             </div>
-            <div className="flex items-center gap-2 bg-success/10 px-3 py-1.5 rounded-full">
-              <div className="w-2 h-2 rounded-full bg-success" />
+            <div className="flex items-center gap-2 bg-success/10 px-4 py-2 rounded-full">
+              <div className="w-2.5 h-2.5 rounded-full bg-success" />
               <span className="text-success text-xs font-semibold">91% aderência</span>
             </div>
           </div>
@@ -56,8 +58,8 @@ export default function ReportsSection() {
           <div className="grid md:grid-cols-[2fr_1fr] gap-8">
             {/* Chart */}
             <div>
-              <p className="text-xs font-semibold text-muted mb-4 uppercase tracking-wide">Horas por dia</p>
-              <div className="flex items-end gap-3 h-48">
+              <p className="text-[11px] font-semibold text-muted mb-4 uppercase tracking-wider">Horas por dia</p>
+              <div className="flex items-end gap-3 h-52 border-b border-border pb-3">
                 {weeklyData.map((d, i) => {
                   const height = (d.hours / maxHours) * 100;
                   const isGood = d.hours >= 21;
@@ -69,25 +71,28 @@ export default function ReportsSection() {
                       initial={{ height: 0 }}
                       whileInView={{ height: `${height}%` }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: i * 0.08 }}
-                      className="flex-1 flex flex-col items-center gap-1"
+                      transition={{ duration: 0.6, delay: i * 0.08, ease: "easeOut" }}
+                      className="flex-1 flex flex-col items-center gap-1.5"
                     >
-                      <span className="text-[10px] font-semibold text-dark">{d.hours}h</span>
-                      <div className={`w-full ${barColor} rounded-t-md transition-colors`} style={{ height: `${height}%` }} />
-                      <span className="text-[10px] text-muted">{d.day}</span>
+                      <span className="text-[11px] font-bold text-dark">{d.hours}h</span>
+                      <div className={`w-full ${barColor} rounded-t-lg`} style={{ height: `${height}%` }} />
+                      <span className="text-[10px] text-muted font-medium">{d.day}</span>
                     </motion.div>
                   );
                 })}
               </div>
-              {/* Meta line */}
-              <div className="relative mt-2">
-                <div className="absolute left-0 right-0 border-t-2 border-dashed border-primary/30" style={{ bottom: `${(22 / maxHours) * 100}%` }} />
+              {/* Meta line indicator */}
+              <div className="relative mt-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 border-t-2 border-dashed border-primary/40" />
+                  <span className="text-[10px] text-primary font-medium">Meta: 22h</span>
+                </div>
               </div>
             </div>
 
             {/* Metrics */}
-            <div className="space-y-4">
-              <p className="text-xs font-semibold text-muted uppercase tracking-wide">Indicadores</p>
+            <div className="space-y-0">
+              <p className="text-[11px] font-semibold text-muted mb-4 uppercase tracking-wider">Indicadores</p>
               {[
                 { label: "Média semanal", value: "18h30", color: "text-dark" },
                 { label: "Melhor dia", value: "Sex — 22h", color: "text-success" },
@@ -95,7 +100,7 @@ export default function ReportsSection() {
                 { label: "Maior pausa", value: "3h15min", color: "text-warning" },
                 { label: "Total da semana", value: "130h", color: "text-dark" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                   <span className="text-sm text-muted">{item.label}</span>
                   <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
                 </div>
@@ -105,20 +110,25 @@ export default function ReportsSection() {
 
           {/* Pause history */}
           <div className="mt-8 pt-6 border-t border-border">
-            <p className="text-xs font-semibold text-muted mb-3 uppercase tracking-wide">Pausas registradas</p>
+            <p className="text-[11px] font-semibold text-muted mb-3 uppercase tracking-wider">Pausas registradas</p>
             <div className="flex flex-wrap gap-2">
-              {["08:30 — 15min", "12:00 — 45min", "15:30 — 10min", "19:00 — 30min"].map((pause, i) => (
-                <span key={i} className="bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-muted">
-                  {pause}
-                </span>
+              {[
+                { time: "08:30", duration: "15min", type: "Café" },
+                { time: "12:00", duration: "45min", type: "Almoço" },
+                { time: "15:30", duration: "10min", type: "Lanche" },
+                { time: "19:00", duration: "30min", type: "Jantar" },
+              ].map((pause, i) => (
+                <div key={i} className="bg-surface border border-border rounded-xl px-4 py-2.5 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-warning" />
+                  <span className="text-xs font-medium text-dark">{pause.time}</span>
+                  <span className="text-[10px] text-muted">—</span>
+                  <span className="text-xs text-muted">{pause.duration}</span>
+                  <span className="text-[10px] text-muted">• {pause.type}</span>
+                </div>
               ))}
             </div>
           </div>
         </motion.div>
-
-        <p className="text-center text-muted text-sm mt-6 italic">
-          O OrthoTrack transforma eventos simples em relatórios de acompanhamento.
-        </p>
       </div>
     </section>
   );

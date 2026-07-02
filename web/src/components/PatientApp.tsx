@@ -6,8 +6,12 @@ import { Target, Clock, Shield, BarChart3 } from "lucide-react";
 
 export default function PatientApp() {
   return (
-    <section className="py-24 bg-white">
-      <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-16 items-center">
+    <section className="py-24 bg-white relative overflow-hidden">
+      {/* Subtle background decoration */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/[0.03] rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3" />
+
+      <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-16 items-center relative z-10">
         {/* Mockup */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -16,15 +20,14 @@ export default function PatientApp() {
           transition={{ duration: 0.6 }}
           className="flex justify-center"
         >
-          <div className="relative">
-            <div className="mockup-container w-72 md:w-80">
+          <div className="relative mockup-phone">
+            <div className="mockup-container w-64 md:w-72">
               <Image
                 src="/images/patient-app.png"
-                alt="App OrthoTrack mostrando acompanhamento de uso pelo paciente com tempo e meta"
+                alt="App OrthoTrack mostrando acompanhamento de uso pelo paciente com tempo, meta de 22h e status"
                 width={320}
                 height={640}
-                className="w-full h-auto relative z-10 rounded-3xl mockup-shadow"
-                style={{ mixBlendMode: 'multiply' }}
+                className="w-full h-auto relative z-10 rounded-2xl"
               />
             </div>
           </div>
@@ -58,9 +61,9 @@ export default function PatientApp() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: i * 0.08 }}
-                className="flex gap-4 items-start"
+                className="flex gap-4 items-start group"
               >
-                <div className={`w-10 h-10 rounded-xl bg-${card.color}/10 flex items-center justify-center shrink-0`}>
+                <div className={`w-10 h-10 rounded-xl bg-${card.color}/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                   <card.icon size={18} className={`text-${card.color}`} />
                 </div>
                 <div>

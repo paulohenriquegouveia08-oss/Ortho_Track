@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Activity, AlertTriangle, TrendingUp } from "lucide-react";
+import { Users, Activity, AlertTriangle, TrendingUp, Clock, Shield } from "lucide-react";
 
 const mockPatients = [
   { name: "João Silva", status: "Em uso", hours: "21h30", adherence: 97, risk: "Baixo", statusColor: "success" },
@@ -25,8 +25,10 @@ const riskBg: Record<string, string> = {
 
 export default function ClinicPanel() {
   return (
-    <section id="para-clinicas" className="py-24 bg-surface">
-      <div className="mx-auto max-w-6xl px-6">
+    <section id="para-clinicas" className="py-24 bg-surface relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/[0.03] rounded-full blur-[120px]" />
+
+      <div className="mx-auto max-w-6xl px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,7 +50,7 @@ export default function ClinicPanel() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-white rounded-2xl border border-border shadow-xl overflow-hidden max-w-5xl mx-auto"
+          className="bg-white rounded-3xl border border-border shadow-2xl overflow-hidden max-w-5xl mx-auto"
         >
           {/* Dashboard Header */}
           <div className="bg-dark px-6 py-4 flex items-center justify-between">
@@ -56,35 +58,50 @@ export default function ClinicPanel() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-white font-bold text-xs">OT</span>
               </div>
-              <span className="text-white font-semibold text-sm">OrthoTrack Painel da Clínica</span>
+              <span className="text-white font-semibold text-sm">OrthoTrack — Painel da Clínica</span>
             </div>
-            <div className="flex items-center gap-2 text-white/60 text-xs">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              Atualizado agora
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-white/50 text-xs">
+                <Clock size={12} />
+                Atualizado agora
+              </div>
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <span className="text-white text-xs font-semibold">DR</span>
+              </div>
             </div>
           </div>
 
           {/* Metrics Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-surface border-b border-border">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-surface/50 border-b border-border">
             {[
-              { icon: Users, label: "Pacientes ativos", value: "24", color: "primary" },
-              { icon: Activity, label: "Em uso agora", value: "12", color: "success" },
-              { icon: AlertTriangle, label: "Em alerta", value: "3", color: "danger" },
-              { icon: TrendingUp, label: "Aderência média", value: "87%", color: "primary" },
+              { icon: Users, label: "Pacientes ativos", value: "24", color: "primary", change: "+2 esta semana" },
+              { icon: Activity, label: "Em uso agora", value: "12", color: "success", change: "50% dos pacientes" },
+              { icon: AlertTriangle, label: "Em alerta", value: "3", color: "danger", change: "Abaixo de 18h" },
+              { icon: TrendingUp, label: "Aderência média", value: "87%", color: "primary", change: "+5% vs semana anterior" },
             ].map((m, i) => (
-              <div key={i} className="bg-card rounded-xl p-4 border border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <m.icon size={14} className={`text-${m.color}`} />
-                  <span className="text-[11px] text-muted font-medium">{m.label}</span>
+              <div key={i} className="bg-card rounded-xl p-4 border border-border hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-lg bg-${m.color}/10 flex items-center justify-center`}>
+                      <m.icon size={14} className={`text-${m.color}`} />
+                    </div>
+                    <span className="text-[11px] text-muted font-medium">{m.label}</span>
+                  </div>
                 </div>
-                <p className="text-xl font-bold text-dark">{m.value}</p>
+                <p className="text-2xl font-bold text-dark">{m.value}</p>
+                <p className="text-[10px] text-muted mt-0.5">{m.change}</p>
               </div>
             ))}
           </div>
 
           {/* Table */}
           <div className="p-6">
-            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 pb-3 border-b border-border text-xs font-semibold text-muted uppercase tracking-wide">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-dark text-sm">Pacientes</h3>
+              <span className="text-xs text-muted bg-surface px-3 py-1 rounded-full">5 de 24</span>
+            </div>
+
+            <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 pb-3 border-b border-border text-[11px] font-semibold text-muted uppercase tracking-wider">
               <span>Paciente</span>
               <span>Status</span>
               <span>Hoje</span>
@@ -94,11 +111,11 @@ export default function ClinicPanel() {
             {mockPatients.map((p, i) => (
               <div
                 key={i}
-                className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-3 md:gap-4 py-4 border-b border-border last:border-0 items-center"
+                className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-3 md:gap-4 py-4 border-b border-border last:border-0 items-center hover:bg-surface/50 transition-colors rounded-lg"
               >
                 <div>
                   <p className="font-semibold text-dark text-sm">{p.name}</p>
-                  <p className="text-xs text-muted md:hidden">Hoje: {p.hours}</p>
+                  <p className="text-[11px] text-muted md:hidden">Hoje: {p.hours}</p>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium w-fit ${statusBg[p.statusColor]}`}>
                   {p.status}
@@ -111,9 +128,10 @@ export default function ClinicPanel() {
                       style={{ width: `${p.adherence}%` }}
                     />
                   </div>
-                  <span className="text-xs text-muted">{p.adherence}%</span>
+                  <span className="text-[11px] text-muted">{p.adherence}%</span>
                 </div>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium w-fit ${riskBg[p.risk]}`}>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium w-fit ${riskBg[p.risk]}`}>
+                  <Shield size={10} />
                   {p.risk}
                 </span>
               </div>
@@ -124,9 +142,9 @@ export default function ClinicPanel() {
         {/* Feature cards below dashboard */}
         <div className="grid md:grid-cols-3 gap-6 mt-12 max-w-5xl mx-auto">
           {[
-            { title: "Status em tempo real", text: "Veja quais pacientes estão usando ou estão sem o alinhador.", icon: Activity },
-            { title: "Pacientes em alerta", text: "Identifique rapidamente quem está abaixo da meta ideal.", icon: AlertTriangle },
-            { title: "Detalhes por paciente", text: "Acesse histórico, média semanal e comportamento recente.", icon: Users },
+            { title: "Status em tempo real", text: "Veja quais pacientes estão usando ou estão sem o alinhador, a qualquer momento.", icon: Activity },
+            { title: "Pacientes em alerta", text: "Identifique rapidamente quem está abaixo da meta ideal de 22 horas diárias.", icon: AlertTriangle },
+            { title: "Detalhes por paciente", text: "Acesse histórico de uso, média semanal e comportamento recente de cada paciente.", icon: Users },
           ].map((card, i) => (
             <motion.div
               key={i}
@@ -134,9 +152,9 @@ export default function ClinicPanel() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="flex gap-4 items-start"
+              className="flex gap-4 items-start group"
             >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 <card.icon size={18} className="text-primary" />
               </div>
               <div>
