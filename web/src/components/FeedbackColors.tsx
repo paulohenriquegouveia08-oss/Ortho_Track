@@ -24,14 +24,14 @@ export default function FeedbackColors() {
           </div>
         </Reveal>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 items-stretch">
           {items.map((item, i) => (
             <Reveal key={i} delay={0.1 + i * 0.1}>
-              <div className={`${item.bg} border ${item.border} rounded-2xl p-8 text-center hover:shadow-lg transition-shadow`}>
+              <div className={`h-full ${item.bg} border ${item.border} rounded-2xl p-8 text-center hover:shadow-lg transition-shadow flex flex-col`}>
                 <item.Icon size={32} className={`${item.textClass} mx-auto mb-4`} />
                 <h3 className={`font-bold text-xl ${item.textClass} mb-1`}>{item.label}</h3>
                 <p className="text-2xl font-bold text-dark mb-3">{item.range}</p>
-                <p className="text-muted text-sm leading-relaxed">{item.text}</p>
+                <p className="text-muted text-sm leading-relaxed flex-1">{item.text}</p>
               </div>
             </Reveal>
           ))}
