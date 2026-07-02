@@ -31,7 +31,7 @@ export default function Header() {
   });
 
   // Outer header transforms
-  const headerWidth = useTransform(progress, [0, 1], ["100%", "min(1180px, calc(100% - 32px))"]);
+  const headerWidth = useTransform(progress, [0, 1], ["100%", "min(960px, calc(100% - 48px))"]);
   const headerTop = useTransform(progress, [0, 1], [0, 16]);
   const headerHeight = useTransform(progress, [0, 1], [84, 68]);
   const headerRadius = useTransform(progress, [0, 1], [0, 999]);
