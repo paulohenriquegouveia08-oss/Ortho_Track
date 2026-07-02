@@ -51,7 +51,7 @@ export default function ReportsSection() {
               {/* Chart */}
               <div>
                 <p className="text-[11px] font-semibold text-muted mb-4 uppercase tracking-wider">Horas por dia</p>
-                <div className="flex items-end gap-3 h-52 border-b border-border pb-3">
+                <div className="flex items-end gap-3 h-64 border-b border-border pb-3">
                   {weeklyData.map((d, i) => {
                     const height = (d.hours / maxHours) * 100;
                     const isGood = d.hours >= 21;

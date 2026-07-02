@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Users, Activity, AlertTriangle, TrendingUp, Clock, Shield } from "lucide-react";
 import Reveal from "./Reveal";
 
@@ -101,9 +102,13 @@ export default function ClinicPanel() {
                 <span>Atualização</span>
               </div>
               {mockPatients.map((p, i) => (
-                <div
+                <motion.div
                   key={i}
-                  className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-3 md:gap-4 py-4 border-b border-border last:border-0 items-center hover:bg-surface/50 transition-colors rounded-lg"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.06 }}
+                  className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-3 md:gap-4 py-4 border-b border-border last:border-0 items-center hover:bg-primary/[0.02] transition-colors rounded-lg px-2"
                 >
                   <div>
                     <p className="font-semibold text-dark text-sm">{p.name}</p>
@@ -127,7 +132,7 @@ export default function ClinicPanel() {
                     {p.risk}
                   </span>
                   <span className="text-[11px] text-muted hidden md:block">{p.updated}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
