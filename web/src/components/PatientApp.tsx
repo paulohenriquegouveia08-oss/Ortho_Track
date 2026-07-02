@@ -2,25 +2,18 @@
 
 import { Target, Clock, Shield, BarChart3 } from "lucide-react";
 import Reveal from "./Reveal";
-import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
 import { FloatingMockup } from "./ui/FloatingMockup";
 
 export default function PatientApp() {
   return (
     <section className="py-24 bg-surface relative overflow-hidden">
-      <ScrollMockupLayer
-        src="/images/patient-app.png"
-        alt="Mockup do app como fundo visual"
-        side="left"
-        opacity={0.06}
-      />
-
       <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
-        {/* Mockup — free, larger, floating */}
+        {/* Mockup — scroll-animated, free, large */}
         <FloatingMockup
           src="/images/patient-app.png"
           alt="Aplicativo do paciente mostrando rotina de uso, tempo e meta de 22 horas"
           className="mx-auto w-[300px] md:w-[420px] lg:w-[520px]"
+          side="left"
         />
 
         {/* Content */}

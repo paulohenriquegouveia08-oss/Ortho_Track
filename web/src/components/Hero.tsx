@@ -1,23 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Target, Activity, Shield, Users } from "lucide-react";
 import Reveal from "./Reveal";
-import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
 import { FloatingMockup } from "./ui/FloatingMockup";
 
 export default function Hero() {
   return (
     <section className="relative gradient-hero pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
-      {/* Scroll background layer */}
-      <ScrollMockupLayer
-        src="/images/hero-mockup.png"
-        alt="Mockup do aplicativo como elemento visual de fundo"
-        side="right"
-        opacity={0.05}
-      />
-
       {/* Subtle dots */}
       <div className="absolute top-[15%] left-[5%] w-2 h-2 rounded-full bg-primary/20 animate-pulse-soft" />
       <div className="absolute top-[25%] right-[8%] w-1.5 h-1.5 rounded-full bg-primary/15 animate-pulse-soft" style={{ animationDelay: '1s' }} />
@@ -36,9 +26,7 @@ export default function Hero() {
           <Reveal delay={0.2}>
             <h1 className="text-3xl md:text-4xl lg:text-[3rem] font-bold text-dark leading-[1.1] mb-6">
               Acompanhe o uso dos alinhadores{" "}
-              <span className="text-primary">
-                mesmo entre as consultas
-              </span>
+              <span className="text-primary">mesmo entre as consultas</span>
             </h1>
           </Reveal>
 
@@ -89,7 +77,7 @@ export default function Hero() {
           </Reveal>
         </div>
 
-        {/* Mockup side — larger, with floating effect */}
+        {/* Mockup side — scroll-animated */}
         <div className="relative flex justify-center z-10">
           <FloatingMockup
             src="/images/hero-mockup.png"

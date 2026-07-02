@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { Users, Activity, AlertTriangle, TrendingUp, Clock, Shield } from "lucide-react";
 import Reveal from "./Reveal";
-import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
 
 const mockPatients = [
   { name: "João Silva", status: "Em uso", hours: "21h30", adherence: 97, risk: "Baixo", statusColor: "success", updated: "Agora" },
@@ -28,12 +27,6 @@ const riskBg: Record<string, string> = {
 export default function ClinicPanel() {
   return (
     <section id="para-clinicas" className="py-24 bg-white relative overflow-hidden">
-      <ScrollMockupLayer
-        src="/images/reports.png"
-        alt="Dashboard como elemento visual de fundo"
-        side="right"
-        opacity={0.04}
-      />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/[0.03] rounded-full blur-[120px]" />
 
       <div className="mx-auto max-w-6xl px-6 relative z-10">
