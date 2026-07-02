@@ -1,0 +1,43 @@
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
+import ProblemSection from "@/components/ProblemSection";
+import OriginSection from "@/components/OriginSection";
+import SolutionSection from "@/components/SolutionSection";
+import HowItWorks from "@/components/HowItWorks";
+import ClinicalTrustSection from "@/components/ClinicalTrustSection";
+import PatientApp from "@/components/PatientApp";
+import ClinicPanel from "@/components/ClinicPanel";
+import ReportsSection from "@/components/ReportsSection";
+import FeedbackColors from "@/components/FeedbackColors";
+import HardwareFuture from "@/components/HardwareFuture";
+import Benefits from "@/components/Benefits";
+import CTAIntermediate from "@/components/CTAIntermediate";
+import PilotForm from "@/components/PilotForm";
+import FAQ from "@/components/FAQ";
+import Footer from "@/components/Footer";
+
+export default function Home() {
+  return (
+    <>
+      <Header />
+      <main className="flex-1">
+        <Hero />
+        <ProblemSection />
+        <OriginSection />
+        <SolutionSection />
+        <HowItWorks />
+        <ClinicalTrustSection />
+        <PatientApp />
+        <ClinicPanel />
+        <ReportsSection />
+        <FeedbackColors />
+        <HardwareFuture />
+        <Benefits />
+        <CTAIntermediate />
+        <PilotForm />
+        <FAQ />
+      </main>
+      <Footer />
+    </>
+  );
+}

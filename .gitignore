@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dist/
+build-*.apk
+*.log
+.env
+.DS_Store
+android/.gradle
+android/app/build
+android/.cxx

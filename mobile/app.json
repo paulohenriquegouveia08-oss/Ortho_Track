@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "OrthoTrack",
+    "slug": "orthotrack",
+      "version": "1.0.18",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "orthotrack",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#0D9488",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.orthotrack.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D9488"
+      },
+      "package": "com.orthotrack.app",
+      "permissions": [
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_DATA_SYNC",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-system-ui",
+      "expo-font"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://137.131.233.254:3004/api",
+    "version": "1.0.18",
+      "router": {},
+      "eas": {
+        "projectId": "acc89125-76a0-4779-8f26-f6df4c264ef5"
+      }
+    },
+    "owner": "15pkzinn"
+  }
+}

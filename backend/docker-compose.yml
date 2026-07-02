@@ -1,0 +1,42 @@
+services:
+  orthotrack-db:
+    image: postgres:16-alpine
+    container_name: orthotrack-db
+    environment:
+      POSTGRES_DB: orthotrack
+      POSTGRES_USER: orthotrack
+      POSTGRES_PASSWORD: orthotrack123
+    ports:
+      - "5435:5432"
+    volumes:
+      - orthotrack-pgdata:/var/lib/postgresql/data
+    networks:
+      - orthotrack-network
+    restart: unless-stopped
+
+  orthotrack-api:
+    build: .
+    container_name: orthotrack-api
+    ports:
+      - "3004:3004"
+    environment:
+      DB_HOST: orthotrack-db
+      DB_PORT: 5432
+      DB_NAME: orthotrack
+      DB_USER: orthotrack
+      DB_PASSWORD: orthotrack123
+      JWT_SECRET: orthotrack-jwt-secret-dev-2026
+      JWT_EXPIRATION: 7d
+      PORT: 3004
+    depends_on:
+      - orthotrack-db
+    networks:
+      - orthotrack-network
+    restart: unless-stopped
+
+volumes:
+  orthotrack-pgdata:
+
+networks:
+  orthotrack-network:
+    driver: bridge
