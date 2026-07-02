@@ -21,7 +21,7 @@ export default function Header() {
   const height = useTransform(scrollY, [0, 120], [72, 62]);
   const paddingLeft = useTransform(scrollY, [0, 120], [24, 20]);
   const paddingRight = useTransform(scrollY, [0, 120], [24, 20]);
-  const borderRadius = useTransform(scrollY, [0, 120], [16, 999]);
+  const borderRadius = useTransform(scrollY, [0, 120], [28, 999]);
   const backgroundColor = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0.85)", "rgba(255,255,255,0.72)"]);
   const boxShadow = useTransform(scrollY, [0, 120], [
     "0 1px 3px rgba(0,0,0,0.04)",
