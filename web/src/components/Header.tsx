@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 
 const navLinks = [
   { label: "Problema", href: "#problema" },
@@ -15,19 +15,21 @@ const navLinks = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
 
-  const top = useTransform(scrollY, [0, 120], [0, 14]);
-  const height = useTransform(scrollY, [0, 120], [72, 62]);
-  const paddingLeft = useTransform(scrollY, [0, 120], [24, 20]);
-  const paddingRight = useTransform(scrollY, [0, 120], [24, 20]);
-  const borderRadius = useTransform(scrollY, [0, 120], [28, 999]);
-  const backgroundColor = useTransform(scrollY, [0, 120], ["rgba(255,255,255,0.85)", "rgba(255,255,255,0.72)"]);
-  const boxShadow = useTransform(scrollY, [0, 120], [
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 80);
+  });
+
+  const top = useTransform(scrollY, [0, 100], [0, 16]);
+  const height = useTransform(scrollY, [0, 100], [72, 56]);
+  const borderRadius = useTransform(scrollY, [0, 100], [20, 999]);
+  const backgroundColor = useTransform(scrollY, [0, 100], ["rgba(255,255,255,0.92)", "rgba(255,255,255,0.78)"]);
+  const boxShadow = useTransform(scrollY, [0, 100], [
     "0 1px 3px rgba(0,0,0,0.04)",
-    "0 20px 60px rgba(15,23,42,0.14), 0 4px 12px rgba(0,0,0,0.06)",
+    "0 12px 40px rgba(15,23,42,0.12), 0 2px 8px rgba(0,0,0,0.05)",
   ]);
-  const borderOpacity = useTransform(scrollY, [0, 120], [0.5, 0.35]);
 
   return (
     <>
@@ -37,22 +39,22 @@ export default function Header() {
         style={{
           top,
           height,
-          paddingLeft,
-          paddingRight,
           borderRadius,
           backgroundColor,
           boxShadow,
+          backdropFilter: "blur(22px) saturate(180%)",
+          WebkitBackdropFilter: "blur(22px) saturate(180%)",
         }}
-        className="fixed left-1/2 w-full max-w-7xl z-50 -translate-x-1/2"
+        className="fixed z-50 left-1/2 border border-white/60 transition-[width] duration-500 ease-out"
+        animate={{
+          x: "-50%",
+          width: scrolled ? "min(1100px, calc(100% - 32px))" : "100%",
+        }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
-        {/* Border ring for glassmorphism */}
-        <motion.div
-          style={{ opacity: borderOpacity }}
-          className="absolute inset-0 rounded-[inherit] border border-white pointer-events-none"
-        />
         <div className="absolute inset-0 rounded-[inherit] ring-1 ring-slate-900/5 pointer-events-none" />
 
-        <div className="mx-auto max-w-7xl flex items-center justify-between h-full px-6">
+        <div className="mx-auto flex items-center justify-between h-full px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
               <span className="text-white font-bold text-xs">OT</span>
