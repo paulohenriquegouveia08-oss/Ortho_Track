@@ -30,12 +30,12 @@ export default function Header() {
     setScrolled(v > 0.5);
   });
 
-  // Outer header transforms
-  const headerWidth = useTransform(progress, [0, 1], ["100%", "min(960px, calc(100% - 48px))"]);
-  const headerTop = useTransform(progress, [0, 1], [0, 16]);
-  const headerHeight = useTransform(progress, [0, 1], [84, 68]);
-  const headerRadius = useTransform(progress, [0, 1], [0, 999]);
-  const headerBg = useTransform(progress, [0, 1], ["rgba(255,255,255,0.92)", "rgba(255,255,255,0.68)"]);
+  // Outer header transforms — compact from the start
+  const headerWidth = useTransform(progress, [0, 1], ["min(1080px, calc(100% - 48px))", "min(960px, calc(100% - 48px))"]);
+  const headerTop = useTransform(progress, [0, 1], [12, 16]);
+  const headerHeight = useTransform(progress, [0, 1], [72, 60]);
+  const headerRadius = useTransform(progress, [0, 1], [28, 999]);
+  const headerBg = useTransform(progress, [0, 1], ["rgba(255,255,255,0.55)", "rgba(255,255,255,0.72)"]);
   const headerShadow = useTransform(progress, [0, 1], [
     "0 0 0 rgba(15,23,42,0)",
     "0 24px 70px rgba(15,23,42,0.14)",
