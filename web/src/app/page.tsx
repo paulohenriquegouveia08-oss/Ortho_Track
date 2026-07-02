@@ -11,6 +11,7 @@ import ReportsSection from "@/components/ReportsSection";
 import FeedbackColors from "@/components/FeedbackColors";
 import HardwareFuture from "@/components/HardwareFuture";
 import Benefits from "@/components/Benefits";
+import ContrastSection from "@/components/ContrastSection";
 import CTAIntermediate from "@/components/CTAIntermediate";
 import PilotForm from "@/components/PilotForm";
 import FAQ from "@/components/FAQ";
@@ -26,11 +27,12 @@ export default function Home() {
         <OriginSection />
         <SolutionSection />
         <HowItWorks />
-        <ClinicalTrustSection />
+        <ContrastSection />
         <PatientApp />
         <ClinicPanel />
         <ReportsSection />
         <FeedbackColors />
+        <ClinicalTrustSection />
         <HardwareFuture />
         <Benefits />
         <CTAIntermediate />
