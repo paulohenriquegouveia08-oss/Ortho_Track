@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Users, Activity, AlertTriangle, TrendingUp, Clock, Shield } from "lucide-react";
 import Reveal from "./Reveal";
+import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
 
 const mockPatients = [
   { name: "João Silva", status: "Em uso", hours: "21h30", adherence: 97, risk: "Baixo", statusColor: "success", updated: "Agora" },
@@ -27,6 +28,12 @@ const riskBg: Record<string, string> = {
 export default function ClinicPanel() {
   return (
     <section id="para-clinicas" className="py-24 bg-white relative overflow-hidden">
+      <ScrollMockupLayer
+        src="/images/reports.png"
+        alt="Dashboard como elemento visual de fundo"
+        side="right"
+        opacity={0.04}
+      />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/[0.03] rounded-full blur-[120px]" />
 
       <div className="mx-auto max-w-6xl px-6 relative z-10">
@@ -43,7 +50,13 @@ export default function ClinicPanel() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="bg-white rounded-3xl border border-border shadow-2xl overflow-hidden max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-white rounded-3xl border border-border shadow-2xl overflow-hidden max-w-5xl mx-auto"
+          >
             {/* Dashboard Header */}
             <div className="bg-dark px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -135,7 +148,7 @@ export default function ClinicPanel() {
                 </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </Reveal>
 
         {/* Feature cards */}

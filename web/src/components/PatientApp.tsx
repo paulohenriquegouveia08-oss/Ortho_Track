@@ -1,39 +1,27 @@
 "use client";
 
-import Image from "next/image";
-import { motion } from "framer-motion";
 import { Target, Clock, Shield, BarChart3 } from "lucide-react";
 import Reveal from "./Reveal";
+import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
+import { FloatingMockup } from "./ui/FloatingMockup";
 
 export default function PatientApp() {
   return (
     <section className="py-24 bg-surface relative overflow-hidden">
-      {/* Subtle background glow */}
-      <div className="absolute top-1/2 left-[30%] -translate-y-1/2 w-[400px] h-[400px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
+      <ScrollMockupLayer
+        src="/images/patient-app.png"
+        alt="Mockup do app como fundo visual"
+        side="left"
+        opacity={0.06}
+      />
 
       <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
-        {/* Mockup — free, larger, with float */}
-        <Reveal direction="left">
-          <div className="flex justify-center relative">
-            {/* Glow behind phone */}
-            <div className="absolute inset-0 bg-primary/[0.06] blur-[80px] rounded-full scale-110 pointer-events-none" />
-
-            <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="relative"
-            >
-              <Image
-                src="/images/patient-app.png"
-                alt="App OrthoTrack mostrando acompanhamento de uso pelo paciente com tempo, meta de 22h e status"
-                width={520}
-                height={720}
-                className="w-[300px] md:w-[420px] lg:w-[520px] h-auto relative z-10 rounded-3xl"
-                style={{ filter: "drop-shadow(0 25px 50px rgba(0,0,0,0.15)) drop-shadow(0 8px 20px rgba(0,155,143,0.1))" }}
-              />
-            </motion.div>
-          </div>
-        </Reveal>
+        {/* Mockup — free, larger, floating */}
+        <FloatingMockup
+          src="/images/patient-app.png"
+          alt="Aplicativo do paciente mostrando rotina de uso, tempo e meta de 22 horas"
+          className="mx-auto w-[300px] md:w-[420px] lg:w-[520px]"
+        />
 
         {/* Content */}
         <div>

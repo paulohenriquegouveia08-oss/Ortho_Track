@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Reveal from "./Reveal";
+import { ScrollMockupLayer } from "./ui/ScrollMockupLayer";
 
 const weeklyData = [
   { day: "Seg", hours: 18 },
@@ -18,7 +19,13 @@ const maxHours = 24;
 export default function ReportsSection() {
   return (
     <section className="py-24 bg-surface relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-primary/[0.03] rounded-full blur-[100px]" />
+      <ScrollMockupLayer
+        src="/images/reports.png"
+        alt="Mockup de relatório como elemento visual de fundo"
+        side="right"
+        opacity={0.05}
+      />
+      <div className="absolute top-0 left-0 w-[300px] h-[300px] bg-primary/[0.03] rounded-full blur-[100px] pointer-events-none" />
 
       <div className="mx-auto max-w-6xl px-6 relative z-10">
         <Reveal>
