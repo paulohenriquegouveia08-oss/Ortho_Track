@@ -1,18 +1,14 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import Reveal from "./Reveal";
 
 export default function CTAIntermediate() {
   return (
-    <section className="py-20 gradient-contrast">
-      <div className="mx-auto max-w-4xl px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
+    <section className="py-20 gradient-contrast relative noise-overlay">
+      <div className="absolute top-0 left-0 w-[300px] h-[200px] bg-primary/[0.08] rounded-full blur-[100px] -translate-x-1/3" />
+      <div className="mx-auto max-w-4xl px-6 text-center relative z-10">
+        <Reveal>
           <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
             Quer validar o OrthoTrack na sua clínica?
           </h2>
@@ -27,7 +23,7 @@ export default function CTAIntermediate() {
             Quero participar do piloto
             <ArrowRight size={18} />
           </a>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import Reveal from "./Reveal";
 
 type FormState = "idle" | "sending" | "success" | "error";
 
@@ -33,16 +34,12 @@ export default function PilotForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-
     setFormState("sending");
     try {
       const response = await fetch("https://formspree.io/f/xldnopkn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          _subject: "Novo interesse - Piloto OrthoTrack",
-        }),
+        body: JSON.stringify({ ...formData, _subject: "Novo interesse - Piloto OrthoTrack" }),
       });
       setFormState(response.ok ? "success" : "error");
     } catch {
@@ -56,104 +53,69 @@ export default function PilotForm() {
   }
 
   return (
-    <section id="piloto" className="py-24 bg-surface">
+    <section id="piloto" className="py-24 bg-surface relative">
       <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-16 items-center">
-        {/* Left text */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-2xl md:text-4xl font-bold text-dark mb-4">
-            Faça parte das primeiras clínicas a testar o OrthoTrack
-          </h2>
-          <p className="text-muted leading-relaxed mb-6">
-            Estamos selecionando clínicas parceiras para validar o acompanhamento
-            digital de pacientes com alinhadores removíveis.
-          </p>
-
-          <div className="space-y-4 mb-8">
-            {[
-              "Acesso antecipado à plataforma",
-              "Suporte direto durante o piloto",
-              "Relatórios personalizados para sua clínica",
-              "Sem custo durante a fase de validação",
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <CheckCircle size={18} className="text-primary shrink-0" />
-                <span className="text-sm text-dark">{item}</span>
-              </div>
-            ))}
+        <Reveal direction="left">
+          <div>
+            <h2 className="text-2xl md:text-4xl font-bold text-dark mb-4">
+              Faça parte das primeiras clínicas a testar o OrthoTrack
+            </h2>
+            <p className="text-muted leading-relaxed mb-6">
+              Estamos selecionando clínicas parceiras para validar o acompanhamento
+              digital de pacientes com alinhadores removíveis.
+            </p>
+            <div className="space-y-4 mb-8">
+              {["Acesso antecipado à plataforma", "Suporte direto durante o piloto", "Relatórios personalizados para sua clínica", "Sem custo durante a fase de validação"].map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle size={18} className="text-primary shrink-0" />
+                  <span className="text-sm text-dark">{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </motion.div>
+        </Reveal>
 
-        {/* Right form */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        >
+        <Reveal direction="right" delay={0.1}>
           {formState === "success" ? (
-            <div className="bg-white rounded-2xl p-10 border border-border shadow-xl text-center">
+            <div className="bg-white rounded-3xl p-10 border border-border shadow-xl text-center">
               <CheckCircle size={48} className="text-success mx-auto mb-4" />
               <h3 className="text-xl font-bold text-dark mb-2">Obrigado!</h3>
               <p className="text-muted">Recebemos seu interesse e entraremos em contato para apresentar o OrthoTrack.</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 border border-border shadow-xl">
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 border border-border shadow-xl">
               <h3 className="font-bold text-dark text-lg mb-6">Preencha seus dados</h3>
-
               {formState === "error" && (
-                <div className="flex items-center gap-2 bg-danger/10 text-danger text-sm p-3 rounded-lg mb-5">
+                <div className="flex items-center gap-2 bg-danger/10 text-danger text-sm p-3 rounded-xl mb-5">
                   <AlertCircle size={16} />
                   Não foi possível enviar agora. Verifique os dados e tente novamente.
                 </div>
               )}
-
               <div className="space-y-4">
                 {fields.map((field) => (
                   <div key={field.name}>
-                    <label className="block text-sm font-medium text-dark mb-1.5">
-                      {field.label}
-                    </label>
+                    <label className="block text-sm font-medium text-dark mb-1.5">{field.label}</label>
                     <input
                       type="text"
                       placeholder={field.placeholder}
                       value={formData[field.name] || ""}
                       onChange={(e) => handleChange(field.name, e.target.value)}
-                      className={`w-full px-4 py-3 rounded-xl border text-sm text-dark placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors ${
-                        errors[field.name] ? "border-danger" : "border-border"
-                      }`}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm text-dark placeholder:text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors ${errors[field.name] ? "border-danger" : "border-border"}`}
                     />
-                    {errors[field.name] && (
-                      <p className="text-danger text-xs mt-1">{errors[field.name]}</p>
-                    )}
+                    {errors[field.name] && <p className="text-danger text-xs mt-1">{errors[field.name]}</p>}
                   </div>
                 ))}
               </div>
-
               <button
                 type="submit"
                 disabled={formState === "sending"}
                 className="mt-6 w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3.5 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-60 shadow-lg shadow-primary/20"
               >
-                {formState === "sending" ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    Quero participar do piloto
-                    <ArrowRight size={18} />
-                  </>
-                )}
+                {formState === "sending" ? <><Loader2 size={18} className="animate-spin" /> Enviando...</> : <>Quero participar do piloto <ArrowRight size={18} /></>}
               </button>
             </form>
           )}
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

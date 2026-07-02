@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Search, Lightbulb, AlertTriangle, Award, ClipboardList, Link } from "lucide-react";
+import Reveal from "./Reveal";
 
 const items = [
   { icon: Search, title: "Menos achismo", text: "A clínica passa a acompanhar dados reais de uso." },
@@ -14,36 +14,27 @@ const items = [
 
 export default function Benefits() {
   return (
-    <section className="py-24 bg-surface">
+    <section className="py-24 bg-white">
       <div className="mx-auto max-w-6xl px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-14"
-        >
-          <h2 className="text-2xl md:text-4xl font-bold text-dark mb-4">
-            Mais clareza no acompanhamento, sem aumentar a carga da equipe
-          </h2>
-        </motion.div>
+        <Reveal>
+          <div className="text-center mb-14">
+            <h2 className="text-2xl md:text-4xl font-bold text-dark mb-4">
+              Mais clareza no acompanhamento, sem aumentar a carga da equipe
+            </h2>
+          </div>
+        </Reveal>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.08 }}
-              className="bg-white rounded-2xl p-6 border border-border hover:shadow-lg hover:border-primary/20 transition-all"
-            >
-              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <item.icon size={20} className="text-primary" />
+            <Reveal key={i} delay={0.08 + i * 0.08}>
+              <div className="bg-surface rounded-2xl p-6 border border-border hover:shadow-lg hover:border-primary/20 transition-all group">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <item.icon size={20} className="text-primary" />
+                </div>
+                <h3 className="font-bold text-dark mb-2">{item.title}</h3>
+                <p className="text-muted text-sm leading-relaxed">{item.text}</p>
               </div>
-              <h3 className="font-bold text-dark mb-2">{item.title}</h3>
-              <p className="text-muted text-sm leading-relaxed">{item.text}</p>
-            </motion.div>
+            </Reveal>
           ))}
         </div>
       </div>
