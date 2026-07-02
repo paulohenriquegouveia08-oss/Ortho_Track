@@ -53,14 +53,17 @@ export default function PilotForm() {
   }
 
   return (
-    <section id="piloto" className="py-24 bg-surface relative">
-      <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-16 items-center">
+    <section id="piloto" className="py-24 gradient-contrast relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[400px] h-[300px] bg-primary/[0.06] rounded-full blur-[120px] -translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.04] rounded-full blur-[100px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
+      <div className="mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-16 items-center relative z-10">
         <Reveal direction="left">
           <div>
-            <h2 className="text-2xl md:text-4xl font-bold text-dark mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
               Faça parte das primeiras clínicas a testar o OrthoTrack
             </h2>
-            <p className="text-muted leading-relaxed mb-6">
+            <p className="text-white/50 leading-relaxed mb-6">
               Estamos selecionando clínicas parceiras para validar o acompanhamento
               digital de pacientes com alinhadores removíveis.
             </p>
@@ -68,7 +71,7 @@ export default function PilotForm() {
               {["Acesso antecipado à plataforma", "Suporte direto durante o piloto", "Relatórios personalizados para sua clínica", "Sem custo durante a fase de validação"].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <CheckCircle size={18} className="text-primary shrink-0" />
-                  <span className="text-sm text-dark">{item}</span>
+                  <span className="text-sm text-white/80">{item}</span>
                 </div>
               ))}
             </div>
@@ -77,13 +80,13 @@ export default function PilotForm() {
 
         <Reveal direction="right" delay={0.1}>
           {formState === "success" ? (
-            <div className="bg-white rounded-3xl p-10 border border-border shadow-xl text-center">
+            <div className="bg-white rounded-3xl p-10 border border-border shadow-2xl text-center">
               <CheckCircle size={48} className="text-success mx-auto mb-4" />
               <h3 className="text-xl font-bold text-dark mb-2">Obrigado!</h3>
               <p className="text-muted">Recebemos seu interesse e entraremos em contato para apresentar o OrthoTrack.</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 border border-border shadow-xl">
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-8 border border-white/10 shadow-2xl">
               <h3 className="font-bold text-dark text-lg mb-6">Preencha seus dados</h3>
               {formState === "error" && (
                 <div className="flex items-center gap-2 bg-danger/10 text-danger text-sm p-3 rounded-xl mb-5">
@@ -109,7 +112,7 @@ export default function PilotForm() {
               <button
                 type="submit"
                 disabled={formState === "sending"}
-                className="mt-6 w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3.5 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-60 shadow-lg shadow-primary/20"
+                className="mt-6 w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3.5 rounded-xl hover:bg-primary-dark transition-all disabled:opacity-60 shadow-lg shadow-primary/25"
               >
                 {formState === "sending" ? <><Loader2 size={18} className="animate-spin" /> Enviando...</> : <>Quero participar do piloto <ArrowRight size={18} /></>}
               </button>

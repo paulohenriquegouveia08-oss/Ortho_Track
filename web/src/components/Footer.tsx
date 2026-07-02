@@ -20,20 +20,17 @@ export default function Footer() {
               </div>
               <span className="font-bold text-lg tracking-tight">OrthoTrack</span>
             </div>
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+            <p className="text-white/40 text-sm leading-relaxed max-w-xs">
               Monitoramento inteligente para tratamentos com alinhadores removíveis.
             </p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-sm mb-4 text-white/70 uppercase tracking-wider">Navegação</h3>
+            <h3 className="font-semibold text-sm mb-4 text-white/60 uppercase tracking-wider">Navegação</h3>
             <ul className="space-y-2.5">
               {quickLinks.map((link) => (
                 <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className="text-white/50 text-sm hover:text-white transition-colors"
-                  >
+                  <a href={link.href} className="text-white/40 text-sm hover:text-primary transition-colors">
                     {link.label}
                   </a>
                 </li>
@@ -42,16 +39,16 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold text-sm mb-4 text-white/70 uppercase tracking-wider">Contato</h3>
-            <ul className="space-y-2.5 text-white/50 text-sm">
+            <h3 className="font-semibold text-sm mb-4 text-white/60 uppercase tracking-wider">Contato</h3>
+            <ul className="space-y-2.5 text-white/40 text-sm">
               <li>Londrina/PR</li>
               <li>
-                <a href="mailto:contato@orthotrack.com.br" className="hover:text-white transition-colors">
+                <a href="mailto:contato@orthotrack.com.br" className="hover:text-primary transition-colors">
                   contato@orthotrack.com.br
                 </a>
               </li>
               <li>
-                <a href="https://wa.me/5500000000000" className="hover:text-white transition-colors">
+                <a href="https://wa.me/5500000000000" className="hover:text-primary transition-colors">
                   WhatsApp
                 </a>
               </li>
@@ -63,7 +60,7 @@ export default function Footer() {
           <p className="text-white/30 text-xs">
             &copy; {new Date().getFullYear()} OrthoTrack. Todos os direitos reservados.
           </p>
-          <Link href="/privacidade" className="text-white/30 text-xs hover:text-white/50 transition-colors">
+          <Link href="/privacidade" className="text-white/30 text-xs hover:text-primary transition-colors">
             Política de Privacidade
           </Link>
         </div>

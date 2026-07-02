@@ -7,38 +7,37 @@ import Reveal from "./Reveal";
 
 export default function Hero() {
   return (
-    <section className="relative gradient-hero pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden noise-overlay">
-      {/* Abstract shapes */}
-      <div className="abstract-shape w-[500px] h-[500px] bg-primary top-[-100px] left-[-100px] blur-[100px]" />
-      <div className="abstract-shape w-[400px] h-[400px] bg-primary bottom-[-50px] right-[-80px] blur-[120px]" />
-      <div className="abstract-shape w-[200px] h-[200px] bg-primary top-[40%] right-[10%] blur-[80px]" />
-      <div className="absolute top-0 left-0 w-full h-full">
-        <div className="absolute top-[15%] left-[5%] w-2 h-2 rounded-full bg-primary/20 animate-pulse-soft" />
-        <div className="absolute top-[25%] right-[8%] w-1.5 h-1.5 rounded-full bg-primary/15 animate-pulse-soft" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-[20%] left-[15%] w-1 h-1 rounded-full bg-white/10 animate-pulse-soft" style={{ animationDelay: '2s' }} />
-      </div>
+    <section className="relative gradient-hero pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
+      {/* Subtle teal radial glow behind mockup area */}
+      <div className="absolute top-1/2 left-[55%] -translate-y-1/2 w-[500px] h-[500px] bg-primary/[0.08] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] right-[5%] w-[300px] h-[300px] bg-primary/[0.05] rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Subtle dots */}
+      <div className="absolute top-[15%] left-[5%] w-2 h-2 rounded-full bg-primary/20 animate-pulse-soft" />
+      <div className="absolute top-[25%] right-[8%] w-1.5 h-1.5 rounded-full bg-primary/15 animate-pulse-soft" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-[20%] left-[15%] w-1 h-1 rounded-full bg-dark/5 animate-pulse-soft" style={{ animationDelay: '2s' }} />
 
       <div className="relative mx-auto max-w-7xl px-6 grid md:grid-cols-[42%_58%] gap-8 items-center">
         {/* Text side */}
         <div className="relative z-10">
           <Reveal delay={0.1}>
-            <span className="inline-flex items-center gap-2 bg-primary/20 text-primary text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-primary/30">
+            <span className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-primary/20">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               HealthTech para alinhadores removíveis
             </span>
           </Reveal>
 
           <Reveal delay={0.2}>
-            <h1 className="text-3xl md:text-4xl lg:text-[3rem] font-bold text-white leading-[1.1] mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-[3rem] font-bold text-dark leading-[1.1] mb-6">
               Acompanhe o uso dos alinhadores{" "}
-              <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+              <span className="text-primary">
                 mesmo entre as consultas
               </span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.3}>
-            <p className="text-white/55 text-base md:text-lg leading-relaxed mb-8 max-w-lg">
+            <p className="text-muted text-base md:text-lg leading-relaxed mb-8 max-w-lg">
               O OrthoTrack ajuda clínicas odontológicas a monitorar a aderência dos
               pacientes, registrar horas de uso e identificar riscos antes que o
               tratamento atrase.
@@ -51,7 +50,7 @@ export default function Hero() {
                 href="#piloto"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="bg-primary text-white font-semibold px-8 py-4 rounded-xl text-center hover:bg-primary-dark transition-all shadow-lg shadow-primary/30 text-base"
+                className="bg-primary text-white font-semibold px-8 py-4 rounded-xl text-center hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 text-base"
               >
                 Quero participar do piloto
               </motion.a>
@@ -59,7 +58,7 @@ export default function Hero() {
                 href="#como-funciona"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="border border-white/20 text-white/80 font-semibold px-8 py-4 rounded-xl text-center hover:bg-white/10 hover:text-white transition-all text-base"
+                className="border border-border text-dark font-semibold px-8 py-4 rounded-xl text-center hover:bg-dark/5 transition-all text-base"
               >
                 Ver como funciona
               </motion.a>
@@ -67,7 +66,7 @@ export default function Hero() {
           </Reveal>
 
           <Reveal delay={0.5}>
-            <div className="flex items-center gap-6 text-white/35 text-xs">
+            <div className="flex items-center gap-6 text-muted text-xs">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-success" />
                 Usado por clínicas
@@ -93,10 +92,10 @@ export default function Hero() {
         >
           <div className="relative">
             {/* Glow behind phone */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] md:w-[420px] md:h-[420px] bg-primary/15 rounded-full blur-[70px]" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] bg-primary/10 rounded-full blur-[40px]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] md:w-[450px] md:h-[450px] bg-primary/10 rounded-full blur-[80px]" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] bg-primary/15 rounded-full blur-[40px]" />
 
-            {/* Phone mockup — larger */}
+            {/* Phone mockup */}
             <div className="relative w-56 md:w-72 lg:w-80">
               <Image
                 src="/images/hero-mockup.png"
@@ -104,7 +103,7 @@ export default function Hero() {
                 width={360}
                 height={720}
                 className="w-full h-auto relative z-10"
-                style={{ filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.35)) drop-shadow(0 10px 20px rgba(0,155,143,0.2))" }}
+                style={{ filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.2)) drop-shadow(0 10px 20px rgba(0,155,143,0.15))" }}
                 priority
               />
             </div>
