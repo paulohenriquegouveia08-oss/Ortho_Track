@@ -55,31 +55,37 @@ export default function Header() {
           style={{ gap }}
           className="mx-auto flex items-center justify-between h-full px-6"
         >
-          <motion.div style={{ scale: logoScale }} className="flex items-center gap-2.5 origin-left">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
-              <span className="text-white font-bold text-xs">OT</span>
-            </div>
-            <span className="font-bold text-base text-dark tracking-tight whitespace-nowrap">OrthoTrack</span>
-          </motion.div>
+          {/* Left group: Logo + Nav links */}
+          <div className="flex items-center gap-8">
+            <motion.div style={{ scale: logoScale }} className="flex items-center gap-2.5 origin-left">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
+                <span className="text-white font-bold text-xs">OT</span>
+              </div>
+              <span className="font-bold text-base text-dark tracking-tight whitespace-nowrap">OrthoTrack</span>
+            </motion.div>
 
-          <nav className="hidden md:flex items-center" style={{ gap: scrolled ? 16 : 24 }}>
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted hover:text-primary transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="#piloto"
-              className="bg-primary text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-primary-dark transition-all shadow-md shadow-primary/20"
-            >
-              Quero participar do piloto
-            </a>
-          </nav>
+            <nav className="hidden md:flex items-center" style={{ gap: scrolled ? 14 : 20 }}>
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </div>
 
+          {/* Right: CTA */}
+          <a
+            href="#piloto"
+            className="hidden md:block bg-primary text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-primary-dark transition-all shadow-md shadow-primary/20 whitespace-nowrap"
+          >
+            Quero participar do piloto
+          </a>
+
+          {/* Mobile menu button */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-dark/5 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
