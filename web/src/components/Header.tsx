@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
@@ -30,6 +30,8 @@ export default function Header() {
     "0 1px 3px rgba(0,0,0,0.04)",
     "0 12px 40px rgba(15,23,42,0.12), 0 2px 8px rgba(0,0,0,0.05)",
   ]);
+  const gap = useTransform(scrollY, [0, 100], [24, 6]);
+  const logoScale = useTransform(scrollY, [0, 100], [1, 0.85]);
 
   return (
     <>
@@ -45,24 +47,22 @@ export default function Header() {
           backdropFilter: "blur(22px) saturate(180%)",
           WebkitBackdropFilter: "blur(22px) saturate(180%)",
         }}
-        className="fixed z-50 left-1/2 border border-white/60 transition-[width] duration-500 ease-out"
-        animate={{
-          x: "-50%",
-          width: scrolled ? "min(1100px, calc(100% - 32px))" : "100%",
-        }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="fixed z-50 left-1/2 -translate-x-1/2 w-full max-w-7xl border border-white/60"
       >
         <div className="absolute inset-0 rounded-[inherit] ring-1 ring-slate-900/5 pointer-events-none" />
 
-        <div className="mx-auto flex items-center justify-between h-full px-6">
-          <Link href="/" className="flex items-center gap-2.5">
+        <motion.div
+          style={{ gap }}
+          className="mx-auto flex items-center justify-between h-full px-6"
+        >
+          <motion.div style={{ scale: logoScale }} className="flex items-center gap-2.5 origin-left">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
               <span className="text-white font-bold text-xs">OT</span>
             </div>
-            <span className="font-bold text-base text-dark tracking-tight">OrthoTrack</span>
-          </Link>
+            <span className="font-bold text-base text-dark tracking-tight whitespace-nowrap">OrthoTrack</span>
+          </motion.div>
 
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center" style={{ gap: scrolled ? 16 : 24 }}>
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -87,7 +87,7 @@ export default function Header() {
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-        </div>
+        </motion.div>
 
         <AnimatePresence>
           {mobileOpen && (
