@@ -11,7 +11,6 @@ import ReportsSection from "@/components/ReportsSection";
 import FeedbackColors from "@/components/FeedbackColors";
 import Benefits from "@/components/Benefits";
 import ContrastSection from "@/components/ContrastSection";
-import CTAIntermediate from "@/components/CTAIntermediate";
 import PilotForm from "@/components/PilotForm";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
@@ -33,7 +32,6 @@ export default function Home() {
         <FeedbackColors />
         <ClinicalTrustSection />
         <Benefits />
-        <CTAIntermediate />
         <PilotForm />
         <FAQ />
       </main>
