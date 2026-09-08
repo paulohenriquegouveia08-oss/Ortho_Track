@@ -13,6 +13,7 @@ import Benefits from "@/components/Benefits";
 import ContrastSection from "@/components/ContrastSection";
 import PilotForm from "@/components/PilotForm";
 import FAQ from "@/components/FAQ";
+import DownloadApp from "@/components/DownloadApp";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -35,6 +36,7 @@ export default function Home() {
         <PilotForm />
         <FAQ />
       </main>
+      <DownloadApp />
       <Footer />
     </>
   );
