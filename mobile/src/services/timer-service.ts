@@ -21,6 +21,7 @@ let status: 'USING' | 'REMOVED' = 'REMOVED';
 let initialized = false;
 let notifeeReady = false;
 let notificationActionInProgress = false;
+let lastNotificationMinutes = -1;
 
 type TimerCallback = (elapsed: number, status: 'USING' | 'REMOVED') => void;
 const listeners = new Set<TimerCallback>();
@@ -62,29 +63,47 @@ async function syncNotification() {
     return;
   }
   try {
-    const totalSeconds = Math.floor(getCurrentElapsedMs() / 1000);
-    const body = buildNotificationBody(status === 'USING', totalSeconds);
+    const isUsing = status === 'USING';
+    const elapsedMs = getCurrentElapsedMs();
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    lastNotificationMinutes = Math.floor(totalSeconds / 60);
+    const body = buildNotificationBody(isUsing, totalSeconds);
+
+    const androidConfig: any = {
+      channelId: CHANNEL_ID,
+      asForegroundService: true,
+      ongoing: true,
+      onlyAlertOnce: true,
+      pressAction: { id: 'default' },
+      smallIcon: 'ic_launcher',
+      actions: isUsing
+        ? [
+            { title: 'Remover', pressAction: { id: 'remove-aligner' } },
+            { title: 'Abrir app', pressAction: { id: 'open-app' } },
+          ]
+        : [
+            { title: 'Recolocar', pressAction: { id: 'reapply-aligner' } },
+            { title: 'Abrir app', pressAction: { id: 'open-app' } },
+          ],
+    };
+
+    if (isUsing) {
+      // Cronometro nativo do Android: o proprio SO atualiza a cada segundo
+      // na barra de notificacoes, 100% silencioso e com consumo minimo de bateria.
+      androidConfig.showChronometer = true;   
+      androidConfig.chronometerDirection = 'up'; //Para subir a contagem do cronometro
+      androidConfig.timestamp = Date.now() - elapsedMs;
+      androidConfig.showTimestamp = true;
+    } else {
+      androidConfig.showChronometer = false;
+      androidConfig.showTimestamp = false;
+    }
 
     await notifee.displayNotification({
       id: NOTIFICATION_ID,
-      title: 'OrthoTrack',
+      title: isUsing ? 'OrthoTrack \u2022 Em uso' : 'OrthoTrack \u2022 Removido',
       body,
-      android: {
-        channelId: CHANNEL_ID,
-        asForegroundService: true,
-        ongoing: true,
-        pressAction: { id: 'default' },
-        smallIcon: 'ic_launcher',
-        actions: status === 'USING'
-          ? [
-              { title: 'Remover', pressAction: { id: 'remove-aligner' } },
-              { title: 'Abrir app', pressAction: { id: 'open-app' } },
-            ]
-          : [
-              { title: 'Recolocar', pressAction: { id: 'reapply-aligner' } },
-              { title: 'Abrir app', pressAction: { id: 'open-app' } },
-            ],
-      },
+      android: androidConfig,
     });
   } catch (err) {
     log('syncNotification error:', err);
@@ -96,8 +115,15 @@ function startInterval() {
 
   const tick = async () => {
     if (status === 'USING' && sessionStart > 0) {
-      await syncNotification();
       const totalSeconds = Math.floor(getCurrentElapsedMs() / 1000);
+      const currentMinutes = Math.floor(totalSeconds / 60);
+
+      // Atualiza a notificacao do sistema apenas quando o minuto mudar
+      if (currentMinutes !== lastNotificationMinutes) {
+        await syncNotification();
+      }
+
+      // Os listeners da tela continuam atualizando a cada segundo
       listeners.forEach(cb => cb(totalSeconds, status));
       intervalId = setTimeout(tick, 1000);
     }
@@ -261,11 +287,15 @@ export async function initialize() {
   try {
     await requestNotificationPermission();
 
+    try {
+      await notifee.deleteChannel(CHANNEL_ID);
+    } catch {}
+
     await notifee.createChannel({
       id: CHANNEL_ID,
       name: 'Monitoramento do alinhador',
       description: 'Acompanha o tempo de uso do alinhador e permite acoes rapidas',
-      importance: AndroidImportance.HIGH,
+      importance: AndroidImportance.LOW,
       vibration: false,
       sound: undefined,
     });

@@ -58,7 +58,7 @@ export default function ClinicDetailScreen() {
         <View style={styles.headerRight}>
           {data.status && (
             <View style={[styles.statusChip, { backgroundColor: data.status === 'active' ? colors.success : colors.danger }]}>
-              <View style={styles.statusDot} />
+              <View style={styles.statusBadgeDot} />
               <Text style={styles.statusText}>{data.status === 'active' ? 'Ativa' : 'Inativa'}</Text>
             </View>
           )}
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
   },
-  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.white },
+  statusBadgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.white },
   statusText: { color: colors.white, fontSize: 12, fontWeight: '600' },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   infoCard: {

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setToken } from '../services/api';
 
-const APP_VERSION = '1.0.8';
+const APP_VERSION = '1.0.18';
 
 interface User {
   id: string;

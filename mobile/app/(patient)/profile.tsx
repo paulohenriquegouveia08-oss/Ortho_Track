@@ -165,8 +165,8 @@ export default function ProfileScreen() {
           ].map((item, i) => (
             <View key={i} style={styles.infoRow}>
               <Ionicons name={item.icon as any} size={16} color={colors.subtext} />
-              <Text style={styles.infoLabel}>{item.label}</Text>
-              <Text style={[styles.infoValue, item.label === 'Risco' && { color: getRiskColor(risk) }]}>
+              <Text style={styles.infoRowLabel}>{item.label}</Text>
+              <Text style={[styles.infoRowValue, item.label === 'Risco' && { color: getRiskColor(risk) }]}>
                 {item.value}
               </Text>
             </View>
@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     gap: spacing.sm,
   },
-  infoLabel: {
+  infoRowLabel: {
     fontSize: 14,
     color: colors.subtext,
     flex: 1,
   },
-  infoValue: {
+  infoRowValue: {
     fontSize: 14,
     fontWeight: '500',
     color: colors.text,

@@ -5,6 +5,7 @@ build-*.apk
 *.log
 .env
 .DS_Store
+*.apk
 android/.gradle
 android/app/build
 android/.cxx

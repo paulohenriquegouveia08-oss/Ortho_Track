@@ -2,9 +2,13 @@ import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '../src/store/auth';
 import { initialize } from '../src/services/timer-service';
 import UpdateChecker from '../src/components/UpdateChecker';
+
+// Keep splash screen visible while loading resources
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function useProtectedRoute() {
   const segments = useSegments();
@@ -32,8 +36,21 @@ export default function RootLayout() {
   const { loading, restore } = useAuth();
 
   useEffect(() => {
-    restore().catch(() => {});
+    // Hide splash screen as soon as auth restore completes or fallback timer triggers
+    const fallbackTimer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 2000);
+
+    restore()
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(fallbackTimer);
+        SplashScreen.hideAsync().catch(() => {});
+      });
+
     initialize().catch(() => {});
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   useProtectedRoute();
@@ -51,6 +68,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <UpdateChecker />
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(admin)" />
         <Stack.Screen name="(clinic)" />
