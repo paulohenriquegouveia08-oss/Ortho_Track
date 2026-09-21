@@ -3,8 +3,20 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Linking, ActivityIndic
 import Constants from 'expo-constants';
 import { colors, spacing, borderRadius } from '../theme/spacing';
 
-const APP_VERSION = Constants.expoConfig?.extra?.version || '1.0.0';
-const API_BASE = Constants.expoConfig?.extra?.apiBaseUrl as string || 'http://localhost:3004/api';
+const APP_VERSION = Constants.expoConfig?.version || (Constants.expoConfig?.extra as any)?.version || '1.0.20';
+const API_BASE = (Constants.expoConfig?.extra as any)?.apiBaseUrl as string || 'http://137.131.233.254:3004/api';
+
+function isOlderVersion(current: string, latest: string): boolean {
+  const c = current.split('.').map(Number);
+  const l = latest.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const cv = c[i] || 0;
+    const lv = l[i] || 0;
+    if (cv < lv) return true;
+    if (cv > lv) return false;
+  }
+  return false;
+}
 
 export default function UpdateChecker() {
   const [updateInfo, setUpdateInfo] = useState<{ latestVersion: string; apkUrl: string | null } | null>(null);
@@ -19,7 +31,7 @@ export default function UpdateChecker() {
     try {
       const res = await fetch(`${API_BASE}/app/version?current=${APP_VERSION}`);
       const data = await res.json();
-      if (data.requiresUpdate && data.apkUrl) {
+      if (data.requiresUpdate && data.apkUrl && isOlderVersion(APP_VERSION, data.latestVersion)) {
         setUpdateInfo({ latestVersion: data.latestVersion, apkUrl: data.apkUrl });
         setVisible(true);
       }

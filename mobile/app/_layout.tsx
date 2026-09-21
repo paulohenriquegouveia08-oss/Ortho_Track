@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, AppState, AppStateStatus } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '../src/store/auth';
 import { initialize } from '../src/services/timer-service';
+import { otaService } from '../src/services/ota-update.service';
 import UpdateChecker from '../src/components/UpdateChecker';
 
 // Keep splash screen visible while loading resources
@@ -36,6 +37,16 @@ export default function RootLayout() {
   const { loading, restore } = useAuth();
 
   useEffect(() => {
+    // 1. Busca atualização OTA automaticamente ao inicializar o aplicativo (sem precisar de botão)
+    otaService.checkForUpdateInBackground().catch(() => {});
+
+    // 2. Busca atualização OTA automaticamente sempre que o usuário voltar do segundo plano
+    const appStateSub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        otaService.checkForUpdateInBackground().catch(() => {});
+      }
+    });
+
     // Hide splash screen as soon as auth restore completes or fallback timer triggers
     const fallbackTimer = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
@@ -50,7 +61,10 @@ export default function RootLayout() {
 
     initialize().catch(() => {});
 
-    return () => clearTimeout(fallbackTimer);
+    return () => {
+      clearTimeout(fallbackTimer);
+      appStateSub.remove();
+    };
   }, []);
 
   useProtectedRoute();

@@ -9,7 +9,6 @@ import { startBackgroundTimer, pauseBackgroundTimer, restoreTimerState, addTimer
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
 import { RoutineOnboardingModal } from '../../src/components/RoutineOnboardingModal';
 import { useAuth } from '../../src/store/auth';
-import { otaService } from '../../src/services/ota-update.service';
 
 const DAILY_GOAL = 22 * 3600;
 const MINIMUM_RECOMMENDED = 18 * 3600;
@@ -71,9 +70,6 @@ export default function InicioScreen() {
           }
         }
       } catch {}
-
-      // Check OTA updates silently in background (non-blocking)
-      otaService.checkForUpdateInBackground();
     })();
   }, [loadRisk]);
 

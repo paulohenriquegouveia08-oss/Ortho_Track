@@ -7,6 +7,7 @@ import { useAuth } from '../../src/store/auth';
 import { usageApi, routineApi } from '../../src/services/api';
 import { stopTimerOnLogout } from '../../src/services/timer-service';
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
+import Constants from 'expo-constants';
 
 interface DentistInfo {
   name: string;
@@ -249,7 +250,9 @@ export default function ProfileScreen() {
 
         {/* Versão do App */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>OrthoTrack v1.0.19</Text>
+          <Text style={styles.versionText}>
+            OrthoTrack v{Constants.expoConfig?.version || (Constants.expoConfig?.extra as any)?.version || '1.0.20'}
+          </Text>
         </View>
       </ScrollView>
 
