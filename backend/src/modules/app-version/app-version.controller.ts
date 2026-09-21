@@ -3,8 +3,8 @@ import { Response } from 'express';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-const LATEST_VERSION = '1.0.18';
-const APK_FILENAME = 'orthotrack-v1.0.18.apk';
+const LATEST_VERSION = '1.0.19';
+const APK_FILENAME = 'orthotrack-v1.0.19.apk';
 
 @Controller('app')
 export class AppVersionController {

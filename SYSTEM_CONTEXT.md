@@ -496,3 +496,86 @@ app/
 3. Gerar relatorio de implementacao futura
 
 ---
+
+## Relatório de Implementação — Sistema de Rotina Inteligente do Paciente
+
+### Contexto & Objetivo
+Implementação do módulo completo de **Rotina Inteligente do Paciente** no OrthoTrack, permitindo que o paciente informe sua rotina diária de refeições/pausas e períodos em que normalmente fica sem o aparelho. O sistema utiliza essa rotina para personalizar notificações contextuais de retirada e recolocação, mantendo estrita separação entre a rotina planejada e o comportamento real registrado.
+
+### Fase
+Rotina Inteligente do Paciente (v1.0.19)
+
+### Data
+2026-09-19
+
+### Arquivos Criados
+- `backend/src/modules/routine/entities/patient-routine.entity.ts`: Entidade `patient_routines` com chave única `patient_id` e flag mestre `enabled`.
+- `backend/src/modules/routine/entities/routine-item.entity.ts`: Entidade `routine_items` com `name`, `type`, `start_time` (HH:mm), `expected_duration_minutes`, `sort_order` e `enabled`.
+- `backend/src/modules/routine/entities/routine-event.entity.ts`: Entidade `routine_events` para auditoria do comportamento real (`removed`, `returned`, `skipped`, `dismissed`, `actual_time`).
+- `backend/src/modules/routine/dto/routine.dto.ts`: DTOs de validação com regex para horário `HH:mm`, limites de duração (1 a 360 min) e tipos permitidos.
+- `backend/src/modules/routine/routine.service.ts`: Serviço NestJS com lógica de busca resiliente por `patientId`/`userId`, criação/atualização de rotina e log de eventos reais.
+- `backend/src/modules/routine/routine.controller.ts`: Endpoints protegidos com JWT (`/routine/me`, `/routine`, `/routine/items`, `/routine/events`).
+- `backend/src/modules/routine/routine.module.ts`: Módulo NestJS registrado no `AppModule`.
+- `mobile/src/services/routine-notification.service.ts`: Serviço de agendamento de notificações com `@notifee/react-native` (Timestamp Trigger, canal de alta prioridade `orthotrack-routine-channel`, textos contextuais humanizados e cancelamento imediato).
+- `mobile/src/components/MealEditModal.tsx`: Modal para adicionar ou editar refeições com chips pré-definidos (5, 10, 15, 20, 30 min), campo customizado, seletores e sugestões de nomes.
+- `mobile/src/components/RoutineOnboardingModal.tsx`: Fluxo de boas-vindas com as 3 refeições padrão (Café, Almoço, Jantar), permissões amigáveis de notificação e opção "Pular".
+- `mobile/app/(patient)/routine.tsx`: Tela completa de gerenciamento da rotina acessível via Perfil do paciente.
+
+### Arquivos Modificados
+- `backend/src/config/database.config.ts`: Registro das novas entidades TypeORM (`PatientRoutine`, `RoutineItem`, `RoutineEvent`).
+- `backend/src/app.module.ts`: Importação do `RoutineModule`.
+- `mobile/src/types/index.ts`: Tipos TypeScript para a rotina (`RoutineItemType`, `RoutineItem`, `PatientRoutine`, `RoutineResponse`, `RoutineEventType`, `RoutineEvent`).
+- `mobile/src/services/api.ts`: Módulo `routineApi` com métodos HTTP completos para rotina e eventos.
+- `mobile/src/services/timer-service.ts`: Integração com ações de notificação do Notifee (`routine-action-remove`, `routine-action-dismiss`), agendamento automático de lembrete de retorno ao pausar o timer e cancelamento imediato ao recolocar o alinhador.
+- `mobile/app/(patient)/_layout.tsx`: Rota oculta da barra de abas (`href: null`) para `/(patient)/routine`.
+- `mobile/app/(patient)/profile.tsx`: Adição do card interativo "Minha Rotina" com status das refeições e atalho de configuração.
+- `mobile/app/(patient)/index.tsx`: Verificação de onboarding no carregamento inicial do paciente e exibição de `RoutineOnboardingModal`.
+
+### Decisões Técnicas
+1. **Sem Machine Learning / IA Complexa**: Primeira versão 100% determinística baseada em regras claras, permitindo fácil expansão futura para análise comportamental.
+2. **Separação Estrita de Rotina vs Comportamento**: A rotina planejada pelo paciente permanece intacta na tabela `routine_items`; desvios e ações reais são salvos exclusivamente em `routine_events`.
+3. **Timezone América/São Paulo**: Todas as conversões de horários e cálculos de intervalo consideram estritamente o fuso horário brasileiro.
+4. **Notificações Locais via Notifee**: Agendadas com `TriggerType.TIMESTAMP`, permitindo que os alertas disparem mesmo em segundo plano ou com o app fechado no Android e iOS.
+5. **Ações Rápidas na Notificação**: Alerta de refeição possui botões interativos ("Retirei agora" e "Dispensar"), permitindo registrar a retirada sem precisar abrir o app manualmente.
+6. **Consistência Visual**: Aderência total ao design system do OrthoTrack (`#0D9488`, `#F97316`, `#F8FAFC`, etc.), sem quebras de layout.
+
+### Status
+Concluído com sucesso. Backend compilando (`nest build`) e Mobile com tipagem estrita validada (`npx tsc --noEmit`).
+
+---
+
+## Relatório de Implementação — Sistema de Atualização OTA (EAS Update)
+
+### Contexto & Objetivo
+Configuração e validação do sistema oficial de atualizações Over-The-Air (OTA) no aplicativo móvel do OrthoTrack através do EAS Update e `expo-updates`. O objetivo é permitir que correções de bugs, novas telas, lógica de negócio e regras de interface sejam publicadas e entregues de forma não-bloqueante e segura aos dispositivos dos usuários, sem exigir a compilação e instalação manual de novos arquivos APK.
+
+### Fase
+Infraestrutura de Atualização OTA (v1.0.19)
+
+### Data
+2026-09-19
+
+### Arquivos Criados
+- `mobile/src/services/ota-update.service.ts`: Serviço de gerenciamento do ciclo de vida de atualizações OTA (verificação em background, download silencioso, logging padronizado `[OTA] ...`, segurança contra reinicializações enquanto timers estão rodando).
+- `mobile/orthotrack-v1.0.19-ota-base.apk`: Novo binário base (APK de 78 MB) compilado com o módulo nativo `expo-updates` integrado.
+- `backend/uploads/apk/orthotrack-v1.0.19.apk`: Cópia do binário base disponibilizada para download via web (`/baixar-app`).
+
+### Arquivos Modificados
+- `mobile/package.json`: Adicionada dependência `expo-updates` (~29.0.18) e scripts `update:preview` e `update:production`.
+- `mobile/app.json`: Configurado bloco `"updates"` (URL do EAS, `checkAutomatically: "ON_LOAD"`, `fallbackToCacheTimeout: 0`) e `"runtimeVersion": "1.0.19"`.
+- `mobile/eas.json`: Vinculação explícita de canais (`development`, `preview`, `production`).
+- `mobile/android/app/src/main/AndroidManifest.xml`: Habilitado `expo.modules.updates.ENABLED = true`, URL de updates, runtime version `1.0.19` e cabeçalho `expo-channel-name: preview`.
+- `mobile/app/(patient)/profile.tsx`: Adicionado card "Informações do App & OTA" para observabilidade em tempo real (Versão, Runtime, Canal, Update ID, Status e botão de checagem manual).
+- `mobile/app/(patient)/index.tsx`: Disparo de checagem OTA em background não-bloqueante na abertura do app.
+
+### Configuração EAS
+- **Canais criados no servidor**: `preview`, `production`, `development`.
+- **Update Group Inicial**: `05534896-2e2b-45da-a05f-0841eb0456bd` publicado com sucesso no canal `preview`.
+- **Runtime Version**: `"1.0.19"` (estratégia estrita que impede aplicação de bundles em binários incompatíveis).
+
+### Status
+Concluído e validado. Build nativo bem-sucedido (`BUILD SUCCESSFUL in 38m 56s`), APK gerado e update baseline publicado no EAS Update.
+
+---
+
+

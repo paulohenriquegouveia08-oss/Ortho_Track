@@ -212,7 +212,7 @@ export async function handleNotificationAction(actionId: string) {
       return;
     }
 
-    if (actionId === 'remove-aligner') {
+    if (actionId === 'remove-aligner' || actionId === 'routine-action-remove') {
       log('[Notification][RecordEvent] REMOVED');
       await usageApi.recordEvent(pid, 'REMOVED');
       log('[Notification][RecordEvent][Success]');
@@ -226,10 +226,53 @@ export async function handleNotificationAction(actionId: string) {
       await syncNotification();
       listeners.forEach(cb => cb(totalSeconds, 'REMOVED'));
 
+      // Se havia notificação de refeição, agenda o lembrete de retorno
+      try {
+        const storedRoutine = await AsyncStorage.getItem('orthotrack_routine');
+        if (storedRoutine) {
+          const routine = JSON.parse(storedRoutine);
+          if (routine?.enabled && routine?.items) {
+            // Busca a refeição mais próxima do horário atual
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            let closestItem = null;
+            let minDiff = 120; // até 2 horas de diferença
+            for (const item of routine.items) {
+              if (!item.enabled) continue;
+              const [h, m] = item.startTime.split(':').map(Number);
+              const itemMins = h * 60 + m;
+              const diff = Math.abs(currentMins - itemMins);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestItem = item;
+              }
+            }
+            if (closestItem) {
+              const { scheduleReturnReminder } = await import('./routine-notification.service');
+              const userData = await AsyncStorage.getItem('orthotrack_user');
+              const u = userData ? JSON.parse(userData) : null;
+              await scheduleReturnReminder(
+                closestItem.expectedDurationMinutes,
+                closestItem.name,
+                u?.name || 'Paciente',
+              );
+            }
+          }
+        }
+      } catch (err) {
+        log('Erro ao agendar lembrete de retorno da rotina:', err);
+      }
+
     } else if (actionId === 'reapply-aligner') {
       log('[Notification][RecordEvent] USING');
       await usageApi.recordEvent(pid, 'USING');
       log('[Notification][RecordEvent][Success]');
+
+      // Cancela lembrete de retorno pendente da rotina
+      try {
+        const { cancelReturnReminder } = await import('./routine-notification.service');
+        await cancelReturnReminder();
+      } catch {}
 
       let serverUsage = 0;
       try {
@@ -250,6 +293,13 @@ export async function handleNotificationAction(actionId: string) {
 
       startInterval();
       await syncNotification();
+
+    } else if (actionId === 'routine-action-dismiss') {
+      log('[Notification][Action] routine-action-dismiss (já recolocou)');
+      try {
+        const { cancelReturnReminder } = await import('./routine-notification.service');
+        await cancelReturnReminder();
+      } catch {}
     }
 
     log('[Notification][Action][Done]', actionId);

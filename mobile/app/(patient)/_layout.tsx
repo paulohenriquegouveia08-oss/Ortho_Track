@@ -93,6 +93,12 @@ export default function PatientLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="routine"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
       <View style={{ backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, paddingVertical: 4, alignItems: 'center' }}>
         <Text style={{ fontSize: 10, color: colors.subtext }}>OrthoTrack v{APP_VERSION}</Text>

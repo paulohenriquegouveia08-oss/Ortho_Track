@@ -10,6 +10,7 @@ import { UsageModule } from './modules/usage/usage.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AppVersionModule } from './modules/app-version/app-version.module';
 import { DevDashboardModule } from './modules/dev-dashboard/dev-dashboard.module';
+import { RoutineModule } from './modules/routine/routine.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { DevDashboardModule } from './modules/dev-dashboard/dev-dashboard.module
     DashboardModule,
     AppVersionModule,
     DevDashboardModule,
+    RoutineModule,
   ],
 })
 export class AppModule {}

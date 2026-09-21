@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '../../src/theme/spacing';
 import { useAuth } from '../../src/store/auth';
-import { usageApi } from '../../src/services/api';
+import { usageApi, routineApi } from '../../src/services/api';
 import { stopTimerOnLogout } from '../../src/services/timer-service';
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
+import { otaService, OtaDiagnosticInfo } from '../../src/services/ota-update.service';
 
 interface DentistInfo {
   name: string;
@@ -21,10 +22,35 @@ export default function ProfileScreen() {
   const [risk, setRisk] = useState<string>('Baixo');
   const [status, setStatus] = useState<string>('REMOVED');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [routineSummary, setRoutineSummary] = useState<{
+    hasRoutine: boolean;
+    count: number;
+    enabled: boolean;
+  } | null>(null);
+  const [otaInfo, setOtaInfo] = useState<OtaDiagnosticInfo>(otaService.getDiagnosticInfo());
+  const [checkingOta, setCheckingOta] = useState(false);
 
   useEffect(() => {
     loadDentistInfo();
+    loadRoutineInfo();
+    const unsub = otaService.subscribe((info) => setOtaInfo(info));
+    return () => unsub();
   }, []);
+
+  const loadRoutineInfo = async () => {
+    try {
+      const res = await routineApi.getMyRoutine();
+      if (res.hasRoutine && res.routine) {
+        setRoutineSummary({
+          hasRoutine: true,
+          count: res.routine.items?.length || 0,
+          enabled: res.routine.enabled,
+        });
+      } else {
+        setRoutineSummary({ hasRoutine: false, count: 0, enabled: false });
+      }
+    } catch {}
+  };
 
   const loadDentistInfo = async () => {
     try {
@@ -62,6 +88,32 @@ export default function ProfileScreen() {
     await useAuth.getState().logout();
     router.replace('/(auth)/login');
   }
+
+  const handleCheckOta = async () => {
+    setCheckingOta(true);
+    try {
+      const hasNew = await otaService.checkForUpdateInBackground();
+      if (!hasNew) {
+        Alert.alert('Atualizações', 'Seu aplicativo já está na versão mais recente!');
+      } else {
+        Alert.alert(
+          'Atualização Baixada',
+          'Uma nova atualização foi baixada e está pronta para uso. Deseja reiniciar agora para aplicar?',
+          [
+            { text: 'Mais tarde', style: 'cancel' },
+            {
+              text: 'Reiniciar agora',
+              onPress: () => otaService.applyUpdateIfSafe(true),
+            },
+          ]
+        );
+      }
+    } catch {
+      Alert.alert('Erro', 'Não foi possível verificar atualizações no momento.');
+    } finally {
+      setCheckingOta(false);
+    }
+  };
 
   const getRiskColor = (r: string) => {
     if (r === 'Baixo') return colors.success;
@@ -152,6 +204,53 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
+        {/* Minha Rotina Card */}
+        <TouchableOpacity
+          style={styles.routineCard}
+          onPress={() => router.push('/(patient)/routine')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.routineLeft}>
+            <View style={styles.routineIconWrapper}>
+              <Ionicons name="restaurant-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.routineTitleRow}>
+                <Text style={styles.routineTitle}>Minha Rotina</Text>
+                {routineSummary?.hasRoutine ? (
+                  <View
+                    style={[
+                      styles.routineBadge,
+                      { backgroundColor: routineSummary.enabled ? '#CCFBF1' : '#F1F5F9' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.routineBadgeText,
+                        { color: routineSummary.enabled ? colors.primary : colors.subtext },
+                      ]}
+                    >
+                      {routineSummary.enabled ? `${routineSummary.count} refeições` : 'Pausada'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={[styles.routineBadge, { backgroundColor: '#FEF3C7' }]}>
+                    <Text style={[styles.routineBadgeText, { color: colors.warning }]}>
+                      Configurar
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.routineSubtitle}>
+                {routineSummary?.hasRoutine
+                  ? 'Horários de refeições e lembretes automáticos'
+                  : 'Defina seus horários para lembretes inteligentes'}
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.subtext} />
+        </TouchableOpacity>
+
         {/* Treatment Card */}
         <View style={styles.treatmentCard}>
           <Text style={styles.cardTitle}>Informações do Tratamento</Text>
@@ -171,6 +270,83 @@ export default function ProfileScreen() {
               </Text>
             </View>
           ))}
+        </View>
+
+        {/* App Info & OTA Diagnostics Card */}
+        <View style={styles.diagnosticsCard}>
+          <View style={styles.diagnosticsHeader}>
+            <View style={styles.diagnosticsIcon}>
+              <Ionicons name="cloud-download-outline" size={20} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Informações do App & OTA</Text>
+              <Text style={styles.diagnosticsSubtitle}>
+                Canal: <Text style={{ fontWeight: '700', color: colors.primary }}>{otaInfo.channel}</Text> • Runtime: {otaInfo.runtimeVersion}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="apps-outline" size={16} color={colors.subtext} />
+            <Text style={styles.infoRowLabel}>Versão do App</Text>
+            <Text style={styles.infoRowValue}>v{otaInfo.appVersion}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="git-branch-outline" size={16} color={colors.subtext} />
+            <Text style={styles.infoRowLabel}>Canal OTA</Text>
+            <Text style={[styles.infoRowValue, { color: colors.primary, fontWeight: '700' }]}>
+              {otaInfo.channel}
+            </Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="finger-print-outline" size={16} color={colors.subtext} />
+            <Text style={styles.infoRowLabel}>Update ID</Text>
+            <Text style={[styles.infoRowValue, { fontSize: 11 }]} numberOfLines={1}>
+              {otaInfo.updateId.length > 16 ? otaInfo.updateId.substring(0, 16) + '...' : otaInfo.updateId}
+            </Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="hardware-chip-outline" size={16} color={colors.subtext} />
+            <Text style={styles.infoRowLabel}>Execução</Text>
+            <Text style={styles.infoRowValue}>
+              {otaInfo.isEmbedded ? 'Binário Embutido' : 'Bundle OTA'}
+            </Text>
+          </View>
+
+          {otaInfo.status === 'ready' && (
+            <View style={styles.otaReadyBanner}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.otaReadyTitle}>Atualização pronta!</Text>
+                <Text style={styles.otaReadySubtitle}>Reinicie para carregar o novo bundle.</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.otaReloadBtn}
+                onPress={() => otaService.applyUpdateIfSafe(true)}
+              >
+                <Text style={styles.otaReloadBtnText}>Aplicar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.checkUpdateButton}
+            onPress={handleCheckOta}
+            disabled={checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading'}
+            activeOpacity={0.8}
+          >
+            {checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading' ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="refresh-outline" size={16} color={colors.primary} />
+                <Text style={styles.checkUpdateText}>Verificar atualizações OTA</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
@@ -378,6 +554,60 @@ const styles = StyleSheet.create({
     color: colors.subtext,
     marginTop: 2,
   },
+  routineCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  routineLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+    paddingRight: spacing.xs,
+  },
+  routineIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  routineTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  routineTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  routineBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  routineBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  routineSubtitle: {
+    fontSize: 12,
+    color: colors.subtext,
+    marginTop: 2,
+  },
   treatmentCard: {
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
@@ -412,6 +642,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.text,
+  },
+  diagnosticsCard: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  diagnosticsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  diagnosticsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  diagnosticsSubtitle: {
+    fontSize: 12,
+    color: colors.subtext,
+    marginTop: 2,
+  },
+  otaReadyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.successLight,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  otaReadyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.success,
+  },
+  otaReadySubtitle: {
+    fontSize: 11,
+    color: colors.text,
+    marginTop: 1,
+  },
+  otaReloadBtn: {
+    backgroundColor: colors.success,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: borderRadius.sm,
+  },
+  otaReloadBtnText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  checkUpdateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  checkUpdateText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
   },
   logoutButton: {
     flexDirection: 'row',

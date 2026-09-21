@@ -9,3 +9,5 @@ build-*.apk
 android/.gradle
 android/app/build
 android/.cxx
+.vercel
+.env*

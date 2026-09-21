@@ -1,19 +1,10 @@
 "use client";
 
-/**
- * AndroidDownload — Seção dedicada de download do APK para pacientes.
- *
- * Estratégia de download: O arquivo /public/orthotrack-v1.0.18.apk é servido
- * diretamente pelo Next.js em HTTPS, evitando o bloqueio de mixed-content
- * (HTTP VPS → HTTPS site) que afeta a rota de reescrita /baixar-app.
- *
- * Esta seção vive na página principal e é referenciada pela âncora #baixar,
- * incluindo o Header e o Footer. Posicionada após o FAQ e antes do Footer.
- */
+import { useState, useEffect } from "react";
 
-const VERSION = "1.0.18";
+const DEFAULT_VERSION = "1.0.19";
+const DEFAULT_SIZE = "82 MB";
 const APK_URL = "/baixar-app";
-const APK_SIZE = "78 MB";
 
 const steps = [
   {
@@ -83,6 +74,23 @@ const steps = [
 ];
 
 export default function AndroidDownload() {
+  const [version, setVersion] = useState(DEFAULT_VERSION);
+  const [apkSize, setApkSize] = useState(DEFAULT_SIZE);
+
+  useEffect(() => {
+    fetch("/api/versao-app")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.latestVersion) {
+          setVersion(data.latestVersion);
+        }
+        if (data?.apkSize) {
+          setApkSize(`${Math.round(data.apkSize / (1024 * 1024))} MB`);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section
       id="baixar"
@@ -144,7 +152,7 @@ export default function AndroidDownload() {
               </div>
               {/* Version badge */}
               <span className="rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
-                v{VERSION}
+                v{version}
               </span>
             </div>
 
@@ -181,14 +189,14 @@ export default function AndroidDownload() {
                   >
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                   </svg>
-                  {APK_SIZE} · APK
+                  {apkSize} · APK
                 </span>
               </div>
 
               {/* Download button */}
               <a
                 href={APK_URL}
-                download={`OrthoTrack-v${VERSION}.apk`}
+                download={`OrthoTrack-v${version}.apk`}
                 className="group flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary-dark hover:shadow-primary/40 hover:-translate-y-0.5 active:translate-y-0"
               >
                 <svg
@@ -205,7 +213,7 @@ export default function AndroidDownload() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                Baixar OrthoTrack v{VERSION}
+                Baixar OrthoTrack v{version}
               </a>
 
               <p className="mt-3 text-center text-xs text-white/30">

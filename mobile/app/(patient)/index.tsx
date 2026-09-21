@@ -3,15 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, AppState, AppStateStat
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, borderRadius } from '../../src/theme/spacing';
-import { usageApi } from '../../src/services/api';
+import { usageApi, routineApi } from '../../src/services/api';
 import { formatTimer, formatSeconds } from '../../src/utils/formatTime';
 import { startBackgroundTimer, pauseBackgroundTimer, restoreTimerState, addTimerListener, getCurrentElapsedMs } from '../../src/services/timer-service';
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
+import { RoutineOnboardingModal } from '../../src/components/RoutineOnboardingModal';
+import { useAuth } from '../../src/store/auth';
+import { otaService } from '../../src/services/ota-update.service';
 
 const DAILY_GOAL = 22 * 3600;
 const MINIMUM_RECOMMENDED = 18 * 3600;
 
 export default function InicioScreen() {
+  const { user } = useAuth();
   const [status, setStatus] = useState<'USING' | 'REMOVED'>('REMOVED');
   const [serverTodaySeconds, setServerTodaySeconds] = useState(0);
   const [activeSessionSeconds, setActiveSessionSeconds] = useState(0);
@@ -20,6 +24,7 @@ export default function InicioScreen() {
   const [risk, setRisk] = useState<string>('Baixo');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'USING' | 'REMOVED' | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const sessionStartRef = useRef(0);
 
   const loadToday = useCallback(async (pid: string) => {
@@ -54,6 +59,21 @@ export default function InicioScreen() {
       }
       setServerTodaySeconds(timerState.serverAccumulated);
       await loadRisk(pid);
+
+      // Check routine onboarding for patient
+      try {
+        const skipped = await AsyncStorage.getItem('routine_onboarding_skipped');
+        const completed = await AsyncStorage.getItem('routine_onboarding_completed');
+        if (!skipped && !completed) {
+          const res = await routineApi.getMyRoutine();
+          if (!res.hasRoutine) {
+            setShowOnboarding(true);
+          }
+        }
+      } catch {}
+
+      // Check OTA updates silently in background (non-blocking)
+      otaService.checkForUpdateInBackground();
     })();
   }, [loadRisk]);
 
@@ -303,6 +323,19 @@ export default function InicioScreen() {
         }}
         icon={pendingAction === 'USING' ? 'checkmark-circle-outline' : 'pause-circle-outline'}
         variant={pendingAction === 'USING' ? 'success' : 'danger'}
+      />
+
+      <RoutineOnboardingModal
+        visible={showOnboarding}
+        patientName={user?.name?.split(' ')[0] || 'Paciente'}
+        onComplete={async () => {
+          await AsyncStorage.setItem('routine_onboarding_completed', 'true');
+          setShowOnboarding(false);
+        }}
+        onSkip={async () => {
+          await AsyncStorage.setItem('routine_onboarding_skipped', 'true');
+          setShowOnboarding(false);
+        }}
       />
     </View>
   );

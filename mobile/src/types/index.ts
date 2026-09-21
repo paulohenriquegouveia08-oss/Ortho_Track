@@ -119,3 +119,44 @@ export interface DashboardStats {
   totalDentists?: number;
   clinics?: Clinic[];
 }
+
+export type RoutineItemType = 'meal' | 'snack' | 'hygiene' | 'other';
+
+export interface RoutineItem {
+  id: string;
+  routineId: string;
+  name: string;
+  type: RoutineItemType;
+  startTime: string; // "HH:mm"
+  expectedDurationMinutes: number;
+  enabled: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PatientRoutine {
+  id: string;
+  patientId: string;
+  enabled: boolean;
+  items: RoutineItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoutineResponse {
+  hasRoutine: boolean;
+  routine: PatientRoutine | null;
+}
+
+export type RoutineEventType = 'removed' | 'returned' | 'skipped' | 'dismissed';
+
+export interface RoutineEvent {
+  id: string;
+  patientId: string;
+  routineItemId?: string;
+  eventType: RoutineEventType;
+  occurredAt: string;
+  expectedAt?: string;
+  metadata?: Record<string, any>;
+}

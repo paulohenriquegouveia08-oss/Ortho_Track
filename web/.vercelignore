@@ -1,0 +1,7 @@
+node_modules
+.next
+*.apk
+*.zip
+*.tar.gz
+*.log
+.DS_Store

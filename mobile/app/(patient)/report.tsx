@@ -198,23 +198,6 @@ export default function ReportScreen() {
           })}
         </View>
 
-        {/* Pauses Card */}
-        <View style={styles.pausesCard}>
-          <Text style={styles.sectionTitle}>Pausas de hoje</Text>
-          {report.pauses?.length > 0 ? (
-            report.pauses.map((p: any, i: number) => (
-              <View key={i} style={styles.pauseItem}>
-                <Ionicons name="pause-outline" size={14} color={colors.warning} />
-                <Text style={styles.pauseTime}>
-                  {new Date(p.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-                <Text style={styles.pauseDuration}>{formatSeconds(p.duration)}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>Nenhuma pausa registrada hoje.</Text>
-          )}
-        </View>
 
         {/* Feedback Card */}
         <View style={styles.feedbackCard}>
@@ -458,39 +441,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.subtext,
     textAlign: 'right',
-  },
-  pausesCard: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  pauseItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  pauseTime: {
-    fontSize: 13,
-    color: colors.text,
-    fontWeight: '500',
-  },
-  pauseDuration: {
-    fontSize: 13,
-    color: colors.subtext,
-    marginLeft: 'auto',
-  },
-  emptyText: {
-    fontSize: 13,
-    color: colors.subtext,
-    textAlign: 'center',
-    paddingVertical: spacing.md,
   },
   feedbackCard: {
     backgroundColor: colors.successLight,

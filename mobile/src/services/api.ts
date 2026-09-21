@@ -1,5 +1,21 @@
 import Constants from 'expo-constants';
-import { User, AuthResponse, DashboardStats, PatientReport, DentistPatient, TodayUsage, WeekDay, InviteValidation, Clinic, UsageEvent } from '../types';
+import {
+  User,
+  AuthResponse,
+  DashboardStats,
+  PatientReport,
+  DentistPatient,
+  TodayUsage,
+  WeekDay,
+  InviteValidation,
+  Clinic,
+  UsageEvent,
+  RoutineResponse,
+  RoutineItem,
+  RoutineItemType,
+  RoutineEvent,
+  RoutineEventType,
+} from '../types';
 
 const API_BASE = Constants.expoConfig?.extra?.apiBaseUrl as string || 'http://localhost:3004/api';
 
@@ -121,3 +137,56 @@ export const dentistApi = {
   patients: () => request('/dentist/patients'),
   patientDetails: (id: string) => request(`/dentist/patients/${id}`),
 };
+
+// Routine
+export const routineApi = {
+  getMyRoutine: (): Promise<RoutineResponse> => request('/routine/me'),
+  createRoutine: (data: {
+    items: Array<{
+      name: string;
+      type?: RoutineItemType;
+      startTime: string;
+      expectedDurationMinutes: number;
+      enabled?: boolean;
+      sortOrder?: number;
+    }>;
+    enabled?: boolean;
+  }): Promise<RoutineResponse> =>
+    request('/routine', { method: 'POST', body: JSON.stringify(data) }),
+  updateRoutineStatus: (enabled: boolean): Promise<RoutineResponse> =>
+    request('/routine', { method: 'PATCH', body: JSON.stringify({ enabled }) }),
+  addItem: (item: {
+    name: string;
+    type?: RoutineItemType;
+    startTime: string;
+    expectedDurationMinutes: number;
+    enabled?: boolean;
+    sortOrder?: number;
+  }): Promise<RoutineItem> =>
+    request('/routine/items', { method: 'POST', body: JSON.stringify(item) }),
+  updateItem: (
+    itemId: string,
+    item: Partial<{
+      name: string;
+      type: RoutineItemType;
+      startTime: string;
+      expectedDurationMinutes: number;
+      enabled: boolean;
+      sortOrder: number;
+    }>
+  ): Promise<RoutineItem> =>
+    request(`/routine/items/${itemId}`, { method: 'PUT', body: JSON.stringify(item) }),
+  deleteItem: (itemId: string): Promise<{ success: boolean; message: string }> =>
+    request(`/routine/items/${itemId}`, { method: 'DELETE' }),
+  recordEvent: (event: {
+    routineItemId?: string;
+    eventType: RoutineEventType;
+    occurredAt?: string;
+    expectedAt?: string;
+    metadata?: Record<string, any>;
+  }): Promise<RoutineEvent> =>
+    request('/routine/events', { method: 'POST', body: JSON.stringify(event) }),
+  getEvents: (limit?: number): Promise<RoutineEvent[]> =>
+    request(`/routine/events${limit ? `?limit=${limit}` : ''}`),
+};
+
