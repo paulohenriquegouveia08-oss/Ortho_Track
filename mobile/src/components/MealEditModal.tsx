@@ -241,11 +241,13 @@ export function MealEditModal({
                     style={styles.timeInput}
                     keyboardType="number-pad"
                     maxLength={2}
+                    selectTextOnFocus
                     value={hours}
                     onChangeText={(val) => {
                       setHours(val.replace(/\D/g, ''));
                     }}
                     placeholder="00"
+                    placeholderTextColor={colors.subtext}
                   />
                   <Text style={styles.timeUnitLabel}>Horas</Text>
                 </View>
@@ -257,11 +259,13 @@ export function MealEditModal({
                     style={styles.timeInput}
                     keyboardType="number-pad"
                     maxLength={2}
+                    selectTextOnFocus
                     value={minutes}
                     onChangeText={(val) => {
                       setMinutes(val.replace(/\D/g, ''));
                     }}
                     placeholder="00"
+                    placeholderTextColor={colors.subtext}
                   />
                   <Text style={styles.timeUnitLabel}>Minutos</Text>
                 </View>
@@ -474,12 +478,15 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
     borderRadius: borderRadius.md,
-    width: 72,
+    width: 76,
     height: 64,
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
+    textAlignVertical: 'center',
+    paddingVertical: 0,
+    includeFontPadding: false,
   },
   timeUnitLabel: {
     fontSize: 11,

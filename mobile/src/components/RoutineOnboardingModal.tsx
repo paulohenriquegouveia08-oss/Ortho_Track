@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
@@ -18,6 +19,7 @@ import { colors, spacing, borderRadius } from '../theme/spacing';
 import { routineApi } from '../services/api';
 import { syncRoutineNotifications } from '../services/routine-notification.service';
 import { RoutineItemType, RoutineResponse } from '../types';
+import { MealEditModal } from './MealEditModal';
 
 interface RoutineOnboardingModalProps {
   visible: boolean;
@@ -30,7 +32,8 @@ interface OnboardingMeal {
   id: string;
   name: string;
   type: RoutineItemType;
-  startTime: string;
+  hours: string;
+  minutes: string;
   expectedDurationMinutes: number;
   enabled: boolean;
   isCustom?: boolean;
@@ -44,7 +47,6 @@ export function RoutineOnboardingModal({
   onComplete,
   onSkip,
 }: RoutineOnboardingModalProps) {
-  const [step, setStep] = useState<number>(0); // 0: Introdução/Café, 1: Almoço, 2: Jantar, 3: Extras/Resumo
   const [saving, setSaving] = useState(false);
 
   const [meals, setMeals] = useState<OnboardingMeal[]>([
@@ -52,7 +54,8 @@ export function RoutineOnboardingModal({
       id: 'default-breakfast',
       name: 'Café da manhã',
       type: 'meal',
-      startTime: '07:30',
+      hours: '07',
+      minutes: '30',
       expectedDurationMinutes: 15,
       enabled: true,
       isCustom: false,
@@ -61,7 +64,8 @@ export function RoutineOnboardingModal({
       id: 'default-lunch',
       name: 'Almoço',
       type: 'meal',
-      startTime: '12:00',
+      hours: '12',
+      minutes: '00',
       expectedDurationMinutes: 30,
       enabled: true,
       isCustom: false,
@@ -70,36 +74,24 @@ export function RoutineOnboardingModal({
       id: 'default-dinner',
       name: 'Jantar',
       type: 'meal',
-      startTime: '19:30',
+      hours: '19',
+      minutes: '30',
       expectedDurationMinutes: 30,
       enabled: true,
       isCustom: false,
     },
   ]);
 
-  // Edição rápida de um item no step atual
+  // Controle de edição avançada via MealEditModal
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isAddingNewMeal, setIsAddingNewMeal] = useState(false);
+
   const updateMeal = (index: number, partial: Partial<OnboardingMeal>) => {
     setMeals((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], ...partial };
       return copy;
     });
-  };
-
-  const addCustomMeal = () => {
-    const newId = `custom-${Date.now()}`;
-    setMeals((prev) => [
-      ...prev,
-      {
-        id: newId,
-        name: 'Lanche da tarde',
-        type: 'snack',
-        startTime: '16:00',
-        expectedDurationMinutes: 15,
-        enabled: true,
-        isCustom: true,
-      },
-    ]);
   };
 
   const removeCustomMeal = (id: string) => {
@@ -121,15 +113,26 @@ export function RoutineOnboardingModal({
       // 1. Pede permissão de notificação amigavelmente
       await requestNotificationPermissionFriendly();
 
-      // 2. Prepara payload
-      const payloadItems = meals.map((m, idx) => ({
-        name: m.name.trim(),
-        type: m.type,
-        startTime: m.startTime,
-        expectedDurationMinutes: m.expectedDurationMinutes,
-        enabled: m.enabled,
-        sortOrder: idx,
-      }));
+      // 2. Prepara e valida payload
+      const payloadItems = meals.map((m, idx) => {
+        let h = parseInt(m.hours, 10);
+        let min = parseInt(m.minutes, 10);
+        if (isNaN(h) || h < 0) h = 0;
+        if (h > 23) h = 23;
+        if (isNaN(min) || min < 0) min = 0;
+        if (min > 59) min = 59;
+
+        const startTime = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+
+        return {
+          name: m.name.trim() || `Refeição ${idx + 1}`,
+          type: m.type,
+          startTime,
+          expectedDurationMinutes: m.expectedDurationMinutes || 15,
+          enabled: m.enabled,
+          sortOrder: idx,
+        };
+      });
 
       // 3. Salva no backend
       const res = await routineApi.createRoutine({
@@ -153,17 +156,16 @@ export function RoutineOnboardingModal({
   };
 
   const renderMealForm = (meal: OnboardingMeal, index: number) => {
-    const [h, m] = meal.startTime.split(':');
-
     return (
       <View key={meal.id} style={styles.mealCard}>
+        {/* Header da Refeição */}
         <View style={styles.mealCardHeader}>
           <View style={styles.mealIconWrapper}>
             <Ionicons
               name={
-                meal.name.toLowerCase().includes('café')
+                meal.name.toLowerCase().includes('café') || meal.name.toLowerCase().includes('cafe')
                   ? 'cafe-outline'
-                  : meal.name.toLowerCase().includes('almoço')
+                  : meal.name.toLowerCase().includes('almoço') || meal.name.toLowerCase().includes('almoco')
                   ? 'restaurant-outline'
                   : meal.name.toLowerCase().includes('jantar')
                   ? 'moon-outline'
@@ -174,49 +176,81 @@ export function RoutineOnboardingModal({
             />
           </View>
           <View style={{ flex: 1 }}>
-            {meal.isCustom ? (
-              <TextInput
-                style={styles.customNameInput}
-                value={meal.name}
-                onChangeText={(text) => updateMeal(index, { name: text })}
-                placeholder="Nome da refeição"
-              />
-            ) : (
-              <Text style={styles.mealNameText}>{meal.name}</Text>
-            )}
+            <Text style={styles.mealNameText} numberOfLines={1}>
+              {meal.name}
+            </Text>
           </View>
+
+          {/* Botão de Edição Avançada */}
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() => setEditingIndex(index)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="pencil-outline" size={13} color={colors.primary} />
+            <Text style={styles.editBtnText}>Editar</Text>
+          </TouchableOpacity>
+
           {meal.isCustom && (
-            <TouchableOpacity onPress={() => removeCustomMeal(meal.id)}>
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => removeCustomMeal(meal.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="trash-outline" size={17} color={colors.danger} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Horário */}
+        {/* Seção de Horário */}
         <View style={styles.inputSection}>
-          <Text style={styles.inputSectionLabel}>Horário que costuma fazer:</Text>
+          <Text style={styles.inputSectionLabel}>Horário habitual:</Text>
           <View style={styles.timeRow}>
-            <TextInput
-              style={styles.timeDigit}
-              keyboardType="number-pad"
-              maxLength={2}
-              value={h}
-              onChangeText={(newH) => {
-                const clean = newH.replace(/\D/g, '');
-                updateMeal(index, { startTime: `${clean.padStart(2, '0').slice(-2)}:${m}` });
-              }}
-            />
+            <View style={styles.timeBox}>
+              <TextInput
+                style={styles.timeDigit}
+                keyboardType="number-pad"
+                maxLength={2}
+                selectTextOnFocus
+                value={meal.hours}
+                onChangeText={(newH) => {
+                  updateMeal(index, { hours: newH.replace(/\D/g, '') });
+                }}
+                onBlur={() => {
+                  let hVal = parseInt(meal.hours, 10);
+                  if (isNaN(hVal) || hVal < 0) hVal = 0;
+                  if (hVal > 23) hVal = 23;
+                  updateMeal(index, { hours: String(hVal).padStart(2, '0') });
+                }}
+                placeholder="00"
+                placeholderTextColor={colors.subtext}
+              />
+              <Text style={styles.timeSubLabel}>Hora</Text>
+            </View>
+
             <Text style={styles.timeColon}>:</Text>
-            <TextInput
-              style={styles.timeDigit}
-              keyboardType="number-pad"
-              maxLength={2}
-              value={m}
-              onChangeText={(newM) => {
-                const clean = newM.replace(/\D/g, '');
-                updateMeal(index, { startTime: `${h}:${clean.padStart(2, '0').slice(-2)}` });
-              }}
-            />
+
+            <View style={styles.timeBox}>
+              <TextInput
+                style={styles.timeDigit}
+                keyboardType="number-pad"
+                maxLength={2}
+                selectTextOnFocus
+                value={meal.minutes}
+                onChangeText={(newM) => {
+                  updateMeal(index, { minutes: newM.replace(/\D/g, '') });
+                }}
+                onBlur={() => {
+                  let mVal = parseInt(meal.minutes, 10);
+                  if (isNaN(mVal) || mVal < 0) mVal = 0;
+                  if (mVal > 59) mVal = 59;
+                  updateMeal(index, { minutes: String(mVal).padStart(2, '0') });
+                }}
+                placeholder="00"
+                placeholderTextColor={colors.subtext}
+              />
+              <Text style={styles.timeSubLabel}>Min</Text>
+            </View>
           </View>
         </View>
 
@@ -231,6 +265,7 @@ export function RoutineOnboardingModal({
                   key={dur}
                   style={[styles.chip, selected && styles.chipSelected]}
                   onPress={() => updateMeal(index, { expectedDurationMinutes: dur })}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                     {dur} min
@@ -246,27 +281,38 @@ export function RoutineOnboardingModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onSkip}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.overlay}
+      >
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>Vamos conhecer sua rotina</Text>
               <Text style={styles.subtitle}>
-                Personalize seus lembretes informando os horários em que você normalmente faz suas
-                refeições e quanto tempo costuma ficar sem o aparelho.
+                Informe os horários habituais das suas refeições e quanto tempo costuma ficar sem o
+                aparelho.
               </Text>
             </View>
-            <TouchableOpacity style={styles.skipBtn} onPress={onSkip}>
+            <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.7}>
               <Text style={styles.skipBtnText}>Pular</Text>
             </TouchableOpacity>
           </View>
 
           {/* Lista de Refeições */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {meals.map((meal, idx) => renderMealForm(meal, idx))}
 
-            <TouchableOpacity style={styles.addMealBtn} onPress={addCustomMeal}>
+            <TouchableOpacity
+              style={styles.addMealBtn}
+              onPress={() => setIsAddingNewMeal(true)}
+              activeOpacity={0.7}
+            >
               <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
               <Text style={styles.addMealBtnText}>+ Adicionar outra refeição / lanche</Text>
             </TouchableOpacity>
@@ -274,8 +320,8 @@ export function RoutineOnboardingModal({
             <View style={styles.privacyNote}>
               <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
               <Text style={styles.privacyNoteText}>
-                Você poderá editar, pausar ou adicionar novos horários a qualquer momento no seu
-                Perfil.
+                Você poderá editar, pausar ou adicionar novos horários a qualquer momento no menu do
+                seu Perfil.
               </Text>
             </View>
           </ScrollView>
@@ -299,7 +345,74 @@ export function RoutineOnboardingModal({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
+
+      {/* Modal de edição de refeição existente */}
+      {editingIndex !== null && meals[editingIndex] && (
+        <MealEditModal
+          visible={true}
+          isNew={false}
+          isDefaultMeal={!meals[editingIndex].isCustom}
+          initialData={{
+            name: meals[editingIndex].name,
+            type: meals[editingIndex].type,
+            startTime: `${meals[editingIndex].hours.padStart(2, '0')}:${meals[editingIndex].minutes.padStart(2, '0')}`,
+            expectedDurationMinutes: meals[editingIndex].expectedDurationMinutes,
+            enabled: meals[editingIndex].enabled,
+          }}
+          onClose={() => setEditingIndex(null)}
+          onSave={async (data) => {
+            const [h, m] = data.startTime.split(':');
+            updateMeal(editingIndex, {
+              name: data.name,
+              type: data.type,
+              hours: h || '12',
+              minutes: m || '00',
+              expectedDurationMinutes: data.expectedDurationMinutes,
+            });
+          }}
+          onDelete={
+            meals[editingIndex].isCustom
+              ? async () => {
+                  removeCustomMeal(meals[editingIndex].id);
+                }
+              : undefined
+          }
+        />
+      )}
+
+      {/* Modal para adicionar nova refeição customizada */}
+      {isAddingNewMeal && (
+        <MealEditModal
+          visible={true}
+          isNew={true}
+          initialData={{
+            name: '',
+            type: 'snack',
+            startTime: '16:00',
+            expectedDurationMinutes: 15,
+            enabled: true,
+          }}
+          onClose={() => setIsAddingNewMeal(false)}
+          onSave={async (data) => {
+            const [h, m] = data.startTime.split(':');
+            const newId = `custom-${Date.now()}`;
+            setMeals((prev) => [
+              ...prev,
+              {
+                id: newId,
+                name: data.name,
+                type: data.type,
+                hours: h || '16',
+                minutes: m || '00',
+                expectedDurationMinutes: data.expectedDurationMinutes,
+                enabled: true,
+                isCustom: true,
+              },
+            ]);
+          }}
+        />
+      )}
     </Modal>
   );
 }
@@ -384,13 +497,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  customNameInput: {
-    fontSize: 15,
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: borderRadius.sm,
+    backgroundColor: '#CCFBF1',
+  },
+  editBtnText: {
+    fontSize: 12,
     fontWeight: '700',
-    color: colors.text,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.primary,
-    paddingVertical: 2,
+    color: colors.primary,
+  },
+  deleteBtn: {
+    padding: 4,
+    marginLeft: 2,
   },
   inputSection: {
     marginTop: spacing.xs,
@@ -399,29 +522,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.subtext,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   timeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    marginBottom: 2,
+  },
+  timeBox: {
+    alignItems: 'center',
   },
   timeDigit: {
     backgroundColor: colors.card,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.primary,
-    borderRadius: borderRadius.sm,
-    width: 46,
-    height: 38,
+    borderRadius: borderRadius.md,
+    width: 60,
+    height: 48,
     textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  timeColon: {
+    textAlignVertical: 'center',
     fontSize: 20,
     fontWeight: '700',
+    color: colors.text,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    includeFontPadding: false,
+  },
+  timeSubLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.subtext,
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  timeColon: {
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.primary,
+    marginBottom: 16,
+    marginHorizontal: 4,
   },
   chipsRow: {
     flexDirection: 'row',

@@ -7,7 +7,6 @@ import { useAuth } from '../../src/store/auth';
 import { usageApi, routineApi } from '../../src/services/api';
 import { stopTimerOnLogout } from '../../src/services/timer-service';
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
-import { otaService, OtaDiagnosticInfo } from '../../src/services/ota-update.service';
 
 interface DentistInfo {
   name: string;
@@ -27,14 +26,10 @@ export default function ProfileScreen() {
     count: number;
     enabled: boolean;
   } | null>(null);
-  const [otaInfo, setOtaInfo] = useState<OtaDiagnosticInfo>(otaService.getDiagnosticInfo());
-  const [checkingOta, setCheckingOta] = useState(false);
 
   useEffect(() => {
     loadDentistInfo();
     loadRoutineInfo();
-    const unsub = otaService.subscribe((info) => setOtaInfo(info));
-    return () => unsub();
   }, []);
 
   const loadRoutineInfo = async () => {
@@ -88,32 +83,6 @@ export default function ProfileScreen() {
     await useAuth.getState().logout();
     router.replace('/(auth)/login');
   }
-
-  const handleCheckOta = async () => {
-    setCheckingOta(true);
-    try {
-      const hasNew = await otaService.checkForUpdateInBackground();
-      if (!hasNew) {
-        Alert.alert('Atualizações', 'Seu aplicativo já está na versão mais recente!');
-      } else {
-        Alert.alert(
-          'Atualização Baixada',
-          'Uma nova atualização foi baixada e está pronta para uso. Deseja reiniciar agora para aplicar?',
-          [
-            { text: 'Mais tarde', style: 'cancel' },
-            {
-              text: 'Reiniciar agora',
-              onPress: () => otaService.applyUpdateIfSafe(true),
-            },
-          ]
-        );
-      }
-    } catch {
-      Alert.alert('Erro', 'Não foi possível verificar atualizações no momento.');
-    } finally {
-      setCheckingOta(false);
-    }
-  };
 
   const getRiskColor = (r: string) => {
     if (r === 'Baixo') return colors.success;
@@ -272,88 +241,16 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* App Info & OTA Diagnostics Card */}
-        <View style={styles.diagnosticsCard}>
-          <View style={styles.diagnosticsHeader}>
-            <View style={styles.diagnosticsIcon}>
-              <Ionicons name="cloud-download-outline" size={20} color={colors.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Informações do App & OTA</Text>
-              <Text style={styles.diagnosticsSubtitle}>
-                Canal: <Text style={{ fontWeight: '700', color: colors.primary }}>{otaInfo.channel}</Text> • Runtime: {otaInfo.runtimeVersion}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="apps-outline" size={16} color={colors.subtext} />
-            <Text style={styles.infoRowLabel}>Versão do App</Text>
-            <Text style={styles.infoRowValue}>v{otaInfo.appVersion}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="git-branch-outline" size={16} color={colors.subtext} />
-            <Text style={styles.infoRowLabel}>Canal OTA</Text>
-            <Text style={[styles.infoRowValue, { color: colors.primary, fontWeight: '700' }]}>
-              {otaInfo.channel}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="finger-print-outline" size={16} color={colors.subtext} />
-            <Text style={styles.infoRowLabel}>Update ID</Text>
-            <Text style={[styles.infoRowValue, { fontSize: 11 }]} numberOfLines={1}>
-              {otaInfo.updateId.length > 16 ? otaInfo.updateId.substring(0, 16) + '...' : otaInfo.updateId}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="hardware-chip-outline" size={16} color={colors.subtext} />
-            <Text style={styles.infoRowLabel}>Execução</Text>
-            <Text style={styles.infoRowValue}>
-              {otaInfo.isEmbedded ? 'Binário Embutido' : 'Bundle OTA'}
-            </Text>
-          </View>
-
-          {otaInfo.status === 'ready' && (
-            <View style={styles.otaReadyBanner}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.otaReadyTitle}>Atualização pronta!</Text>
-                <Text style={styles.otaReadySubtitle}>Reinicie para carregar o novo bundle.</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.otaReloadBtn}
-                onPress={() => otaService.applyUpdateIfSafe(true)}
-              >
-                <Text style={styles.otaReloadBtnText}>Aplicar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={styles.checkUpdateButton}
-            onPress={handleCheckOta}
-            disabled={checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading'}
-            activeOpacity={0.8}
-          >
-            {checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading' ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="refresh-outline" size={16} color={colors.primary} />
-                <Text style={styles.checkUpdateText}>Verificar atualizações OTA</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
         {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
           <Ionicons name="log-out-outline" size={20} color={colors.danger} />
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
+
+        {/* Versão do App */}
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>OrthoTrack v1.0.19</Text>
+        </View>
       </ScrollView>
 
       <ConfirmActionModal
@@ -643,82 +540,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text,
   },
-  diagnosticsCard: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  diagnosticsHeader: {
-    flexDirection: 'row',
+  versionContainer: {
     alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  diagnosticsIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    marginTop: spacing.xs,
   },
-  diagnosticsSubtitle: {
+  versionText: {
     fontSize: 12,
+    fontWeight: '500',
     color: colors.subtext,
-    marginTop: 2,
-  },
-  otaReadyBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.successLight,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  otaReadyTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.success,
-  },
-  otaReadySubtitle: {
-    fontSize: 11,
-    color: colors.text,
-    marginTop: 1,
-  },
-  otaReloadBtn: {
-    backgroundColor: colors.success,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: borderRadius.sm,
-  },
-  otaReloadBtnText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  checkUpdateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-    marginTop: spacing.md,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  checkUpdateText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
   },
   logoutButton: {
     flexDirection: 'row',

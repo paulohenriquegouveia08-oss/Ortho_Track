@@ -1,6 +1,7 @@
 import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 export type OtaStatus =
   | 'idle'
@@ -25,6 +26,71 @@ export interface OtaDiagnosticInfo {
 }
 
 type OtaListener = (info: OtaDiagnosticInfo) => void;
+
+const OTA_NOTIFICATION_CHANNEL_ID = 'orthotrack-system-updates';
+const OTA_DOWNLOADING_NOTIFICATION_ID = 'orthotrack-ota-downloading';
+const OTA_READY_NOTIFICATION_ID = 'orthotrack-ota-ready';
+
+async function setupOtaNotificationChannel() {
+  try {
+    await notifee.createChannel({
+      id: OTA_NOTIFICATION_CHANNEL_ID,
+      name: 'Atualizações do Aplicativo',
+      description: 'Avisos sobre novidades e melhorias do OrthoTrack',
+      importance: AndroidImportance.LOW,
+      sound: undefined,
+      vibration: false,
+    });
+  } catch {}
+}
+
+async function showDownloadingNotification() {
+  try {
+    await setupOtaNotificationChannel();
+    await notifee.displayNotification({
+      id: OTA_DOWNLOADING_NOTIFICATION_ID,
+      title: 'OrthoTrack',
+      body: 'Atualizando o aplicativo em segundo plano...',
+      android: {
+        channelId: OTA_NOTIFICATION_CHANNEL_ID,
+        smallIcon: 'ic_launcher',
+        ongoing: true,
+        autoCancel: false,
+        onlyAlertOnce: true,
+        progress: {
+          indeterminate: true,
+        },
+      },
+    });
+  } catch (e) {
+    console.warn('[OTA] Erro ao exibir notificação de download:', e);
+  }
+}
+
+async function cancelDownloadingNotification() {
+  try {
+    await notifee.cancelNotification(OTA_DOWNLOADING_NOTIFICATION_ID);
+  } catch {}
+}
+
+async function showUpdateReadyNotification() {
+  try {
+    await cancelDownloadingNotification();
+    await setupOtaNotificationChannel();
+    await notifee.displayNotification({
+      id: OTA_READY_NOTIFICATION_ID,
+      title: 'OrthoTrack Atualizado',
+      body: 'As novidades foram baixadas e serão ativadas ao reabrir o app.',
+      android: {
+        channelId: OTA_NOTIFICATION_CHANNEL_ID,
+        smallIcon: 'ic_launcher',
+        autoCancel: true,
+      },
+    });
+  } catch (e) {
+    console.warn('[OTA] Erro ao exibir notificação de conclusão:', e);
+  }
+}
 
 class OtaUpdateService {
   private status: OtaStatus = 'idle';
@@ -91,6 +157,8 @@ class OtaUpdateService {
   /**
    * Verifica e baixa atualização silenciosamente em background.
    * Não bloqueia a inicialização do app nem o fluxo do usuário.
+   * Emite notificação de download e notificação de update pronto.
+   * NUNCA reinicia o app automaticamente durante o uso ativo do paciente.
    */
   public async checkForUpdateInBackground(): Promise<boolean> {
     if (__DEV__) {
@@ -125,19 +193,26 @@ class OtaUpdateService {
         return false;
       }
 
-      console.log('[OTA] Update available');
+      console.log('[OTA] Update available, starting background download');
       this.status = 'downloading';
       this.notify();
-      console.log('[OTA] Downloading update');
+
+      // Dispara a notificação de download em segundo plano
+      await showDownloadingNotification();
 
       const fetchResult = await Updates.fetchUpdateAsync();
 
+      // Cancela a notificação de progresso
+      await cancelDownloadingNotification();
+
       if (fetchResult.isNew) {
-        console.log('[OTA] Update downloaded');
-        console.log('[OTA] Update ready');
+        console.log('[OTA] Update downloaded & ready for next launch');
         this.updateDownloaded = true;
         this.status = 'ready';
         this.notify();
+
+        // Avisa que a atualização foi baixada e entrará em vigor na próxima abertura
+        await showUpdateReadyNotification();
         return true;
       } else {
         console.log('[OTA] No new update applied');
@@ -148,6 +223,7 @@ class OtaUpdateService {
     } catch (err: any) {
       const message = err?.message || 'Erro desconhecido na verificação OTA';
       console.warn('[OTA] Update check or download failed:', message);
+      await cancelDownloadingNotification();
       this.lastError = message;
       this.status = 'error';
       this.notify();
