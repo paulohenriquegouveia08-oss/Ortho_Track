@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const DEFAULT_VERSION = "1.0.19";
+const DEFAULT_VERSION = "1.0.20";
 const DEFAULT_SIZE = "82 MB";
 const APK_URL = "/baixar-app";
 

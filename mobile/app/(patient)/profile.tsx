@@ -8,6 +8,7 @@ import { usageApi, routineApi } from '../../src/services/api';
 import { stopTimerOnLogout } from '../../src/services/timer-service';
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
 import Constants from 'expo-constants';
+import { otaService, OtaDiagnosticInfo } from '../../src/services/ota-update.service';
 
 interface DentistInfo {
   name: string;
@@ -27,10 +28,15 @@ export default function ProfileScreen() {
     count: number;
     enabled: boolean;
   } | null>(null);
+  const [otaInfo, setOtaInfo] = useState<OtaDiagnosticInfo>(otaService.getDiagnosticInfo());
+  const [checkingOta, setCheckingOta] = useState(false);
+  const appVersion = Constants.expoConfig?.version || (Constants.expoConfig?.extra as any)?.version || '1.0.20';
 
   useEffect(() => {
     loadDentistInfo();
     loadRoutineInfo();
+    const unsub = otaService.subscribe((info) => setOtaInfo(info));
+    return () => unsub();
   }, []);
 
   const loadRoutineInfo = async () => {
@@ -84,6 +90,32 @@ export default function ProfileScreen() {
     await useAuth.getState().logout();
     router.replace('/(auth)/login');
   }
+
+  const handleCheckOta = async () => {
+    setCheckingOta(true);
+    try {
+      const hasNew = await otaService.checkForUpdateInBackground();
+      if (!hasNew) {
+        Alert.alert('Atualizações', `Seu aplicativo já está na versão mais recente (v${appVersion})!`);
+      } else {
+        Alert.alert(
+          'Atualização Disponível',
+          'Uma nova atualização foi baixada em segundo plano e está pronta para uso. Deseja reiniciar agora para aplicar?',
+          [
+            { text: 'Mais tarde', style: 'cancel' },
+            {
+              text: 'Reiniciar agora',
+              onPress: () => otaService.applyUpdateIfSafe(true),
+            },
+          ]
+        );
+      }
+    } catch {
+      Alert.alert('Erro', 'Não foi possível verificar atualizações no momento.');
+    } finally {
+      setCheckingOta(false);
+    }
+  };
 
   const getRiskColor = (r: string) => {
     if (r === 'Baixo') return colors.success;
@@ -240,6 +272,64 @@ export default function ProfileScreen() {
               </Text>
             </View>
           ))}
+        </View>
+
+        {/* Card de Atualizações do Aplicativo */}
+        <View style={styles.updateCard}>
+          <View style={styles.updateCardHeader}>
+            <View style={styles.updateIcon}>
+              <Ionicons name="cloud-download-outline" size={20} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Atualizações do Aplicativo</Text>
+              <Text style={styles.updateCardSubtitle}>
+                Versão instalada: <Text style={{ fontWeight: '700', color: colors.primary }}>v{appVersion}</Text>
+              </Text>
+            </View>
+          </View>
+
+          {otaInfo.status === 'ready' && (
+            <View style={styles.otaReadyBanner}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.otaReadyTitle}>Atualização pronta!</Text>
+                <Text style={styles.otaReadySubtitle}>Toque em reiniciar para aplicar as novidades.</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.otaReloadBtn}
+                onPress={() => otaService.applyUpdateIfSafe(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.otaReloadBtnText}>Reiniciar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {otaInfo.status === 'downloading' && (
+            <View style={styles.otaDownloadingBanner}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.otaDownloadingText}>Baixando melhorias em segundo plano...</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.checkUpdateButton}
+            onPress={handleCheckOta}
+            disabled={checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading'}
+            activeOpacity={0.8}
+          >
+            {checkingOta || otaInfo.status === 'checking' || otaInfo.status === 'downloading' ? (
+              <View style={styles.btnRow}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.checkUpdateText}>Buscando atualizações...</Text>
+              </View>
+            ) : (
+              <View style={styles.btnRow}>
+                <Ionicons name="refresh-outline" size={16} color={colors.primary} />
+                <Text style={styles.checkUpdateText}>Verificar atualizações</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Logout Button */}
@@ -542,6 +632,103 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.text,
+  },
+  updateCard: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  updateCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  updateIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  updateCardSubtitle: {
+    fontSize: 13,
+    color: colors.subtext,
+    marginTop: 2,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  otaReadyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.successLight,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    gap: spacing.sm,
+  },
+  otaReadyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.success,
+  },
+  otaReadySubtitle: {
+    fontSize: 11,
+    color: colors.text,
+    marginTop: 1,
+  },
+  otaReloadBtn: {
+    backgroundColor: colors.success,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: borderRadius.sm,
+  },
+  otaReloadBtnText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  otaDownloadingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDFA',
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+    gap: spacing.sm,
+  },
+  otaDownloadingText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  checkUpdateButton: {
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkUpdateText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
   },
   versionContainer: {
     alignItems: 'center',
