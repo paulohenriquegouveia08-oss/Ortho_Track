@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 import { colors, spacing, borderRadius } from '../../src/theme/spacing';
 import { usageApi } from '../../src/services/api';
 import { formatSeconds } from '../../src/utils/formatTime';
@@ -14,7 +15,7 @@ export default function ReportScreen() {
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadReport = useCallback(() => {
     AsyncStorage.getItem('orthotrack_patient_id').then(pid => {
       if (pid) {
         usageApi.report(pid).then(setReport).catch(console.error).finally(() => setLoading(false));
@@ -23,6 +24,9 @@ export default function ReportScreen() {
       }
     });
   }, []);
+
+  useEffect(() => { loadReport(); }, [loadReport]);
+  useFocusEffect(useCallback(() => { loadReport(); }, [loadReport]));
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;

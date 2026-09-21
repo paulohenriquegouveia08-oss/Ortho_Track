@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsageService } from './usage.service';
-import { UsageEventDto } from './dto/usage.dto';
+import { UsageEventDto, BatchSyncUsageDto } from './dto/usage.dto';
 import { RolesGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
@@ -14,7 +14,13 @@ export class UsageController {
   @Post('event')
   @UseGuards(AuthGuard('jwt'))
   recordEvent(@Body() dto: UsageEventDto) {
-    return this.usageService.recordEvent(dto.patientId, dto.type);
+    return this.usageService.recordEvent(dto.patientId, dto.type, dto.timestamp);
+  }
+
+  @Post('sync')
+  @UseGuards(AuthGuard('jwt'))
+  syncBatch(@Body() dto: BatchSyncUsageDto) {
+    return this.usageService.syncBatch(dto.patientId, dto.events);
   }
 
   @Get('current-session/:patientId')

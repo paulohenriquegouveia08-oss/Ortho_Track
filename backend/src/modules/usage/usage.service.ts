@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { UsageEvent } from './usage-event.entity';
 import { DailyReport } from './daily-report.entity';
@@ -68,32 +68,133 @@ export class UsageService {
     return patient;
   }
 
-  async recordEvent(patientId: string, type: string) {
+  async recordEvent(patientId: string, type: string, clientTimestamp?: string | Date) {
     const patient = await this.lookupPatient(patientId);
     if (!patient) throw new BadRequestException('Paciente nao encontrado');
     const pid = patient.id;
 
+    const eventDate = clientTimestamp ? new Date(clientTimestamp) : new Date();
+    const timeMs = eventDate.getTime();
+
+    // Idempotency: check if identical event was already recorded in ±2s
+    let event = await this.eventRepo.findOne({
+      where: {
+        patientId: pid,
+        type,
+        timestamp: Between(new Date(timeMs - 2000), new Date(timeMs + 2000)),
+      },
+    });
+
+    const today = getLocalDateOf(eventDate);
+
+    if (!event) {
+      event = await this.eventRepo.save(this.eventRepo.create({
+        patientId: pid,
+        type,
+        timestamp: eventDate,
+        date: today,
+      }));
+    }
+
+    // Determine current status based on the chronologically latest event
+    const latestDbEvent = await this.eventRepo.findOne({
+      where: { patientId: pid },
+      order: { timestamp: 'DESC' },
+    });
+    const currentStatus = latestDbEvent?.type || type;
+    await this.patientRepo.update(pid, { currentStatus });
+
+    const rangeStart = getLocalMidnight(eventDate);
     const now = new Date();
-    const today = getLocalDateOf(now);
-
-    const event = await this.eventRepo.save(this.eventRepo.create({
-      patientId: pid,
-      type,
-      timestamp: now,
-      date: today,
-    }));
-
-    await this.patientRepo.update(pid, { currentStatus: type });
+    await this.recalculateDailyReportsForRange(pid, rangeStart, now);
 
     if (type === 'REMOVED') {
-      await this.recalculateUsageOnRemove(pid, now);
+      let report = await this.reportRepo.findOne({ where: { patientId: pid, date: today } });
+      if (report) {
+        report.breakCount = (report.breakCount || 0) + 1;
+        await this.reportRepo.save(report);
+      }
     }
 
     if (type === 'USING') {
       await this.ensureDailyReport(pid, today);
     }
 
-    return { event, currentStatus: type };
+    return { event, currentStatus };
+  }
+
+  async syncBatch(
+    patientId: string,
+    events: Array<{ type: string; timestamp: string; clientEventId?: string }>,
+  ) {
+    const patient = await this.lookupPatient(patientId);
+    if (!patient) throw new BadRequestException('Paciente nao encontrado');
+    const pid = patient.id;
+
+    if (!events || events.length === 0) {
+      return this.getToday(pid);
+    }
+
+    // Sort events chronologically ascending
+    const sorted = [...events].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    let earliestDate: Date = new Date();
+    const insertedEvents: UsageEvent[] = [];
+
+    for (const item of sorted) {
+      const eventDate = new Date(item.timestamp);
+      if (isNaN(eventDate.getTime())) continue;
+
+      if (eventDate.getTime() < earliestDate.getTime()) {
+        earliestDate = eventDate;
+      }
+
+      const timeMs = eventDate.getTime();
+      const existing = await this.eventRepo.findOne({
+        where: {
+          patientId: pid,
+          type: item.type,
+          timestamp: Between(new Date(timeMs - 2000), new Date(timeMs + 2000)),
+        },
+      });
+
+      if (!existing) {
+        const dateStr = getLocalDateOf(eventDate);
+        const created = await this.eventRepo.save(
+          this.eventRepo.create({
+            patientId: pid,
+            type: item.type,
+            timestamp: eventDate,
+            date: dateStr,
+          }),
+        );
+        insertedEvents.push(created);
+      }
+    }
+
+    // Recalculate daily reports from earliest affected date to now
+    const rangeStart = getLocalMidnight(earliestDate);
+    const now = new Date();
+    await this.recalculateDailyReportsForRange(pid, rangeStart, now);
+
+    // Update patient status to the latest event in DB
+    const latestDbEvent = await this.eventRepo.findOne({
+      where: { patientId: pid },
+      order: { timestamp: 'DESC' },
+    });
+
+    if (latestDbEvent) {
+      await this.patientRepo.update(pid, { currentStatus: latestDbEvent.type });
+    }
+
+    const todayData = await this.getToday(pid);
+    return {
+      syncedCount: insertedEvents.length,
+      currentStatus: latestDbEvent?.type || patient.currentStatus,
+      today: todayData,
+    };
   }
 
   private async ensureDailyReport(patientId: string, today: string) {

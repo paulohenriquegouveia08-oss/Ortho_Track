@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { offlineStorage } from './offline-storage.service';
 import {
   User,
   AuthResponse,
@@ -122,13 +123,68 @@ export const clinicApi = {
 
 // Usage
 export const usageApi = {
-  recordEvent: (patientId: string, type: string) =>
-    request('/usage/event', { method: 'POST', body: JSON.stringify({ patientId, type }) }),
-  today: (patientId: string) => request(`/usage/today/${patientId}`),
+  recordEvent: async (patientId: string, type: string, timestamp?: string, clientEventId?: string) => {
+    return request('/usage/event', {
+      method: 'POST',
+      body: JSON.stringify({ patientId, type, timestamp, clientEventId }),
+    });
+  },
+
+  syncBatch: async (
+    patientId: string,
+    events: Array<{ type: string; timestamp: string; clientEventId?: string }>
+  ) => {
+    return request('/usage/sync', {
+      method: 'POST',
+      body: JSON.stringify({ patientId, events }),
+    });
+  },
+
+  today: async (patientId: string) => {
+    try {
+      const data = await request(`/usage/today/${patientId}`);
+      await offlineStorage.setCachedToday(patientId, data);
+      return data;
+    } catch (err) {
+      const cached = await offlineStorage.getCachedToday(patientId);
+      if (cached) return cached;
+      throw err;
+    }
+  },
+
   week: (patientId: string) => request(`/usage/week/${patientId}`),
-  history: (patientId: string) => request(`/usage/history/${patientId}`),
-  report: (patientId: string) => request(`/report/${patientId}`),
-  currentSession: (patientId: string) => request(`/usage/current-session/${patientId}`),
+
+  history: async (patientId: string) => {
+    try {
+      const data = await request(`/usage/history/${patientId}`);
+      if (Array.isArray(data)) {
+        await offlineStorage.setCachedHistory(patientId, data);
+      }
+      return data;
+    } catch (err) {
+      const cached = await offlineStorage.getCachedHistory(patientId);
+      if (cached) return cached;
+      throw err;
+    }
+  },
+
+  report: async (patientId: string) => {
+    try {
+      const data = await request(`/report/${patientId}`);
+      if (data) {
+        await offlineStorage.setCachedReport(patientId, data);
+      }
+      return data;
+    } catch (err) {
+      const cached = await offlineStorage.getCachedReport(patientId);
+      if (cached) return cached;
+      throw err;
+    }
+  },
+
+  currentSession: async (patientId: string) => {
+    return request(`/usage/current-session/${patientId}`);
+  },
 };
 
 // Dentist

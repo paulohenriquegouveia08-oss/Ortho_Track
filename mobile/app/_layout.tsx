@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useAuth } from '../src/store/auth';
 import { initialize } from '../src/services/timer-service';
 import { otaService } from '../src/services/ota-update.service';
+import { offlineSync } from '../src/services/offline-sync.service';
 import UpdateChecker from '../src/components/UpdateChecker';
 
 // Keep splash screen visible while loading resources
@@ -60,6 +61,7 @@ export default function RootLayout() {
       });
 
     initialize().catch(() => {});
+    offlineSync.initializeAutoSync();
 
     return () => {
       clearTimeout(fallbackTimer);

@@ -9,6 +9,8 @@ import { startBackgroundTimer, pauseBackgroundTimer, restoreTimerState, addTimer
 import ConfirmActionModal from '../../src/components/ConfirmActionModal';
 import { RoutineOnboardingModal } from '../../src/components/RoutineOnboardingModal';
 import { useAuth } from '../../src/store/auth';
+import { offlineStorage } from '../../src/services/offline-storage.service';
+import { offlineSync, SyncState } from '../../src/services/offline-sync.service';
 
 const DAILY_GOAL = 22 * 3600;
 const MINIMUM_RECOMMENDED = 18 * 3600;
@@ -113,6 +115,21 @@ export default function InicioScreen() {
     return () => sub.remove();
   }, [patientId, loadRisk]);
 
+  const [syncState, setSyncState] = useState<SyncState>('idle');
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+  useEffect(() => {
+    offlineSync.initializeAutoSync();
+    const unsub = offlineSync.addSyncListener((s, count) => {
+      setSyncState(s);
+      setPendingSyncCount(count);
+      if (s === 'synced' && patientId) {
+        loadToday(patientId);
+      }
+    });
+    return () => unsub();
+  }, [patientId, loadToday]);
+
   const handleAction = useCallback(() => {
     if (!patientId) return;
     const newType = status === 'USING' ? 'REMOVED' : 'USING';
@@ -124,28 +141,37 @@ export default function InicioScreen() {
     if (!patientId || !pendingAction) return;
     const newType = pendingAction;
     setShowConfirmModal(false);
-
     setLoading(true);
-    try {
-      const result = await usageApi.recordEvent(patientId, newType);
-      setStatus(result.currentStatus);
-      const todayData = await usageApi.today(patientId);
-      setServerTodaySeconds(todayData.todayUsageSeconds);
 
+    const nowIso = new Date().toISOString();
+    setStatus(newType);
+
+    try {
       if (newType === 'USING') {
         sessionStartRef.current = Date.now();
-        await startBackgroundTimer(patientId, todayData.todayUsageSeconds, Date.now());
+        await startBackgroundTimer(patientId, serverTodaySeconds, Date.now());
+        await offlineStorage.enqueueEvent({ patientId, type: 'USING', timestamp: nowIso });
+        await offlineStorage.applyOptimisticEvent(patientId, 'USING', nowIso);
       } else {
-        await pauseBackgroundTimer();
+        const sessionElapsed = sessionStartRef.current > 0 ? Math.floor((Date.now() - sessionStartRef.current) / 1000) : 0;
+        const newAccumulated = serverTodaySeconds + sessionElapsed;
+        setServerTodaySeconds(newAccumulated);
+        sessionStartRef.current = 0;
         setActiveSessionSeconds(0);
+        await pauseBackgroundTimer();
+        await offlineStorage.enqueueEvent({ patientId, type: 'REMOVED', timestamp: nowIso });
+        await offlineStorage.applyOptimisticEvent(patientId, 'REMOVED', nowIso, sessionElapsed);
       }
+
+      // Sincroniza em segundo plano silenciosamente se houver internet
+      offlineSync.syncPendingEvents(patientId).catch(() => {});
     } catch (err: any) {
-      Alert.alert('Erro', err.message);
+      console.warn('[InicioScreen] Erro ao executar ação local:', err);
     } finally {
       setLoading(false);
       setPendingAction(null);
     }
-  }, [pendingAction, patientId]);
+  }, [pendingAction, patientId, serverTodaySeconds]);
 
   const totalDisplay = status === 'USING' ? activeSessionSeconds : serverTodaySeconds;
   const progress = Math.min((totalDisplay / DAILY_GOAL) * 100, 100);
@@ -186,6 +212,21 @@ export default function InicioScreen() {
       </View>
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
+        {pendingSyncCount > 0 && (
+          <View style={styles.syncBanner}>
+            <Ionicons
+              name={syncState === 'syncing' ? 'sync-outline' : 'cloud-offline-outline'}
+              size={15}
+              color={syncState === 'syncing' ? colors.primary : '#D97706'}
+            />
+            <Text style={[styles.syncText, { color: syncState === 'syncing' ? colors.primary : '#B45309' }]}>
+              {syncState === 'syncing'
+                ? 'Sincronizando registros com a nuvem...'
+                : `${pendingSyncCount} ${pendingSyncCount === 1 ? 'registro salvo' : 'registros salvos'} no aparelho (offline)`}
+            </Text>
+          </View>
+        )}
+
         {/* Main Timer Card */}
         <View style={styles.timerCard}>
           <Text style={styles.cardTitle}>Tempo de uso hoje</Text>
@@ -568,5 +609,22 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 18,
     fontWeight: '700',
+  },
+  syncBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  syncText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

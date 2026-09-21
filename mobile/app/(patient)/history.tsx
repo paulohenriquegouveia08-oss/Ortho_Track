@@ -6,6 +6,8 @@ import { useFocusEffect } from 'expo-router';
 import { colors, spacing, borderRadius } from '../../src/theme/spacing';
 import { usageApi } from '../../src/services/api';
 import { formatTimeBR } from '../../src/utils/formatTime';
+import { offlineStorage } from '../../src/services/offline-storage.service';
+import { offlineSync } from '../../src/services/offline-sync.service';
 
 type Filter = 'today' | 'week' | 'month';
 
@@ -77,21 +79,54 @@ export default function HistoryScreen() {
       const pid = await AsyncStorage.getItem('orthotrack_patient_id');
       if (pid) {
         const [historyData, reportData] = await Promise.all([
-          usageApi.history(pid),
-          usageApi.report(pid),
+          usageApi.history(pid).catch(async () => (await offlineStorage.getCachedHistory(pid)) || []),
+          usageApi.report(pid).catch(async () => await offlineStorage.getCachedReport(pid)),
         ]);
-        setEvents(historyData);
+
+        const pendingQueue = await offlineStorage.getPendingQueue();
+        const pendingForPatient = pendingQueue.filter((p) => p.patientId === pid);
+
+        const syntheticPending = pendingForPatient.map((p) => ({
+          id: p.clientEventId,
+          patientId: p.patientId,
+          type: p.type,
+          timestamp: p.timestamp,
+          date: p.timestamp.split('T')[0],
+          createdAt: p.timestamp,
+          isLocalPending: true,
+        }));
+
+        const existingTimestamps = new Set(
+          (historyData || []).map((e: any) => new Date(e.timestamp).getTime())
+        );
+        const uniquePending = syntheticPending.filter(
+          (p) => !existingTimestamps.has(new Date(p.timestamp).getTime())
+        );
+
+        const allEvents = [...uniquePending, ...(historyData || [])].sort(
+          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+
+        setEvents(allEvents);
         if (reportData?.risk) setRisk(reportData.risk);
         if (reportData?.currentStatus) setStatus(reportData.currentStatus);
       }
     } catch (err) {
-      console.error(err);
+      console.error('[History] loadData error:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+    const unsub = offlineSync.addSyncListener((state) => {
+      if (state === 'synced') {
+        loadData();
+      }
+    });
+    return () => unsub();
+  }, [loadData]);
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const getFilteredEvents = (): any[] => {
@@ -223,6 +258,9 @@ export default function HistoryScreen() {
                     <View style={styles.eventInfo}>
                       <Text style={[styles.eventTitle, { color: e.type === 'USING' ? colors.success : colors.danger }]}>
                         {e.type === 'USING' ? 'Alinhador colocado' : 'Alinhador removido'}
+                        {e.isLocalPending && (
+                          <Text style={{ fontSize: 11, color: '#D97706', fontWeight: '500' }}> (salvo offline)</Text>
+                        )}
                       </Text>
                       <Text style={styles.eventTime}>{formatTimeBR(e.timestamp)}</Text>
                     </View>
@@ -252,6 +290,9 @@ export default function HistoryScreen() {
                 <View style={styles.eventInfo}>
                   <Text style={[styles.eventTitle, { color: e.type === 'USING' ? colors.success : colors.danger }]}>
                     {e.type === 'USING' ? 'Alinhador colocado' : 'Alinhador removido'}
+                    {e.isLocalPending && (
+                      <Text style={{ fontSize: 11, color: '#D97706', fontWeight: '500' }}> (salvo offline)</Text>
+                    )}
                   </Text>
                   <Text style={styles.eventTime}>{formatTimeBR(e.timestamp)}</Text>
                 </View>

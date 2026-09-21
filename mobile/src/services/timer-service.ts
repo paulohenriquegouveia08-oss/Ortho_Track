@@ -3,6 +3,8 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
 import { usageApi, getToken, setToken } from './api';
+import { offlineStorage } from './offline-storage.service';
+import { offlineSync } from './offline-sync.service';
 
 const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
@@ -214,8 +216,7 @@ export async function handleNotificationAction(actionId: string) {
 
     if (actionId === 'remove-aligner' || actionId === 'routine-action-remove') {
       log('[Notification][RecordEvent] REMOVED');
-      await usageApi.recordEvent(pid, 'REMOVED');
-      log('[Notification][RecordEvent][Success]');
+      const nowIso = new Date().toISOString();
 
       const totalSeconds = Math.floor(getCurrentElapsedMs() / 1000);
       accumulatedMs = totalSeconds * 1000;
@@ -226,17 +227,23 @@ export async function handleNotificationAction(actionId: string) {
       await syncNotification();
       listeners.forEach(cb => cb(totalSeconds, 'REMOVED'));
 
+      // Salva na fila offline e no cache local
+      await offlineStorage.enqueueEvent({ patientId: pid, type: 'REMOVED', timestamp: nowIso });
+      await offlineStorage.applyOptimisticEvent(pid, 'REMOVED', nowIso, 0);
+
+      // Sincroniza em segundo plano se houver conexão
+      offlineSync.syncPendingEvents(pid).catch(() => {});
+
       // Se havia notificação de refeição, agenda o lembrete de retorno
       try {
         const storedRoutine = await AsyncStorage.getItem('orthotrack_routine');
         if (storedRoutine) {
           const routine = JSON.parse(storedRoutine);
           if (routine?.enabled && routine?.items) {
-            // Busca a refeição mais próxima do horário atual
             const now = new Date();
             const currentMins = now.getHours() * 60 + now.getMinutes();
             let closestItem = null;
-            let minDiff = 120; // até 2 horas de diferença
+            let minDiff = 120;
             for (const item of routine.items) {
               if (!item.enabled) continue;
               const [h, m] = item.startTime.split(':').map(Number);
@@ -265,8 +272,7 @@ export async function handleNotificationAction(actionId: string) {
 
     } else if (actionId === 'reapply-aligner') {
       log('[Notification][RecordEvent] USING');
-      await usageApi.recordEvent(pid, 'USING');
-      log('[Notification][RecordEvent][Success]');
+      const nowIso = new Date().toISOString();
 
       // Cancela lembrete de retorno pendente da rotina
       try {
@@ -274,13 +280,6 @@ export async function handleNotificationAction(actionId: string) {
         await cancelReturnReminder();
       } catch {}
 
-      let serverUsage = 0;
-      try {
-        const data = await usageApi.today(pid);
-        serverUsage = data.todayUsageSeconds || 0;
-      } catch {}
-
-      accumulatedMs = serverUsage * 1000;
       sessionStart = Date.now();
       status = 'USING';
       lastSyncTimestamp = Date.now();
@@ -289,11 +288,16 @@ export async function handleNotificationAction(actionId: string) {
       await AsyncStorage.setItem('timer_patient_id', pid);
       await AsyncStorage.setItem('timer_start', String(sessionStart));
       await AsyncStorage.setItem('timer_accumulated', String(accumulatedMs));
-      await AsyncStorage.setItem('timer_server_accumulated', String(serverUsage));
 
       startInterval();
       await syncNotification();
 
+      // Salva na fila offline e no cache local
+      await offlineStorage.enqueueEvent({ patientId: pid, type: 'USING', timestamp: nowIso });
+      await offlineStorage.applyOptimisticEvent(pid, 'USING', nowIso, 0);
+
+      // Sincroniza em segundo plano se houver conexão
+      offlineSync.syncPendingEvents(pid).catch(() => {});
     } else if (actionId === 'routine-action-dismiss') {
       log('[Notification][Action] routine-action-dismiss (já recolocou)');
       try {
@@ -439,52 +443,106 @@ export async function stopBackgroundTimer() {
 export async function restoreTimerState() {
   log('restoreTimerState');
 
-  const pid = await AsyncStorage.getItem('orthotrack_patient_id') || await AsyncStorage.getItem('timer_patient_id');
+  const pid =
+    (await AsyncStorage.getItem('orthotrack_patient_id')) ||
+    (await AsyncStorage.getItem('timer_patient_id'));
   if (!pid) {
     return { active: false, patientId: '', sessionStart: 0, elapsed: 0, serverAccumulated: 0 };
   }
 
   patientId = pid;
 
-  const todayData = await usageApi.today(pid).catch(() => null);
-  const serverTodaySeconds = todayData?.todayUsageSeconds || 0;
-  log('[Hydrate] serverTodaySeconds:', serverTodaySeconds);
+  // 1. Carregar estado local prévio do AsyncStorage
+  const localActive = (await AsyncStorage.getItem('timer_active')) === 'true';
+  const localStart = Number(await AsyncStorage.getItem('timer_start')) || 0;
+  const localAccumulated = Number(await AsyncStorage.getItem('timer_accumulated')) || 0;
+
+  // 2. Aplicar imediatamente o estado local no timer para não piscar nem zerar
+  accumulatedMs = localAccumulated;
   lastSyncTimestamp = Date.now();
 
-  await AsyncStorage.setItem('timer_server_accumulated', String(serverTodaySeconds));
+  if (localActive && localStart > 0) {
+    status = 'USING';
+    sessionStart = localStart;
+    startInterval();
+    await syncNotification();
+  } else {
+    status = 'REMOVED';
+    sessionStart = 0;
+    await syncNotification();
+  }
 
-  // SEMPRE verificar com o backend se existe sessão ativa
+  const initialElapsed = Math.floor(getCurrentElapsedMs() / 1000);
+
+  // 3. Se houver itens na fila offline pendentes de envio, disparar sincronização em background
+  // e NUNCA sobrepor com dados antigos desatualizados do servidor!
+  const pendingCount = await offlineStorage.getPendingCount();
+  if (pendingCount > 0) {
+    log('[Hydrate] itens pendentes na fila offline:', pendingCount);
+    offlineSync.syncPendingEvents(pid).catch(() => {});
+    return {
+      active: status === 'USING',
+      patientId: pid,
+      sessionStart,
+      elapsed: initialElapsed,
+      serverAccumulated: Math.floor(accumulatedMs / 1000),
+    };
+  }
+
+  // 4. Se a fila estiver vazia, consultar o backend para harmonizar dados
   try {
-    const session = await usageApi.currentSession(pid);
-    log('[Hydrate] currentSession:', session);
+    const todayData = await usageApi.today(pid);
+    const serverTodaySeconds = todayData?.todayUsageSeconds || 0;
+    await AsyncStorage.setItem('timer_server_accumulated', String(serverTodaySeconds));
 
-    if (session.active && session.sessionStart) {
-      // Backend diz que sessão está ativa — sincronizar com ele
+    const session = await usageApi.currentSession(pid).catch(() => null);
+
+    if (session && session.active && session.sessionStart) {
       accumulatedMs = serverTodaySeconds * 1000;
       sessionStart = session.sessionStart;
       status = 'USING';
       await AsyncStorage.setItem('timer_active', 'true');
       await AsyncStorage.setItem('timer_start', String(sessionStart));
+      await AsyncStorage.setItem('timer_accumulated', String(accumulatedMs));
       startInterval();
       await syncNotification();
       const totalSeconds = Math.floor(getCurrentElapsedMs() / 1000);
-      log('[Hydrate] active session from server, total:', totalSeconds);
-      return { active: true, patientId: pid, sessionStart, elapsed: totalSeconds, serverAccumulated: serverTodaySeconds };
+      return {
+        active: true,
+        patientId: pid,
+        sessionStart,
+        elapsed: totalSeconds,
+        serverAccumulated: serverTodaySeconds,
+      };
+    } else if (session && !session.active) {
+      accumulatedMs = serverTodaySeconds * 1000;
+      sessionStart = 0;
+      status = 'REMOVED';
+      await AsyncStorage.setItem('timer_active', 'false');
+      await AsyncStorage.setItem('timer_accumulated', String(accumulatedMs));
+      await syncNotification();
+      const totalSeconds = Math.floor(accumulatedMs / 1000);
+      return {
+        active: false,
+        patientId: pid,
+        sessionStart: 0,
+        elapsed: totalSeconds,
+        serverAccumulated: serverTodaySeconds,
+      };
     }
   } catch (err) {
-    log('[Hydrate] currentSession error:', err);
+    log('[Hydrate] Backend indisponível (offline). Mantendo estado local preciso:', err);
   }
 
-  // Backend diz que não há sessão ativa — garantir estado local limpo
-  accumulatedMs = serverTodaySeconds * 1000;
-  sessionStart = 0;
-  status = 'REMOVED';
-  await AsyncStorage.setItem('timer_active', 'false');
-
-  await syncNotification();
-  const totalSeconds = Math.floor(getCurrentElapsedMs() / 1000);
-  log('[Hydrate] final state:', { status, accumulatedMs, totalSeconds });
-  return { active: false, patientId: pid, sessionStart: 0, elapsed: totalSeconds, serverAccumulated: serverTodaySeconds };
+  // 5. Retorna o estado local (caso offline ou sem alterações)
+  const finalElapsed = Math.floor(getCurrentElapsedMs() / 1000);
+  return {
+    active: status === 'USING',
+    patientId: pid,
+    sessionStart,
+    elapsed: finalElapsed,
+    serverAccumulated: Math.floor(accumulatedMs / 1000),
+  };
 }
 
 export async function stopTimerOnLogout() {
